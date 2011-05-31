@@ -22,6 +22,7 @@ CREATE TABLE tx_kesearch_filters (
 	options text,
 	rendertype varchar(90) DEFAULT '' NOT NULL,
 	expandbydefault tinyint(1) DEFAULT '0' NOT NULL,
+	markAllCheckboxes tinyint(1) DEFAULT '0' NOT NULL,
 	cssclass varchar(90) DEFAULT '' NOT NULL,
 	wrap tinytext,
 

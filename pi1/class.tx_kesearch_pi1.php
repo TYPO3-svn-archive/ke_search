@@ -694,10 +694,10 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				// if option is in optionArray, we have to mark the checkboxes
 				// but only if customer has searched for filters
 				if($isOptionInOptionArray) {
-					// first...remove all empty piVars[filter]
-					// &tx_kesearch_pi1[filter][3][1]=&tx_kesearch_pi1[filter][3][2]=
-					// if there is no filter defined implode returns an empty string
 					$checkBoxParams['selected'] = (implode($this->piVars['filter'][$filterUid])) ? 'checked="checked"' : '';
+					if(!is_array($this->piVars['filter'][$filterUid]) && $this->filters[$filterUid]['markAllCheckboxes']) {
+						$checkBoxParams['selected'] = 'checked="checked"';
+					}
 					$checkBoxParams['disabled'] = '';
 				} else {
 					$checkBoxParams['disabled'] = 'disabled="disabled"';
@@ -761,7 +761,6 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$filterContent = $this->cObj->substituteMarker($filterContent,'###SPECIAL_CSS_CLASS###', $this->filters[$filterUid]['cssclass'] ? $this->filters[$filterUid]['cssclass'] : '');
 
 		return $filterContent;
-
 	}
 
 
@@ -1480,7 +1479,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 
 		// add ordering
 		// predefine ordering. Can be overwritten.
-		$orderByField = count($swords) ? 'score' : 'sortdate';
+		$orderByField = (count($swords) || count($tagsAgainst)) ? 'score' : 'sortdate';
 		$orderByDir = 'DESC';
 
 		// if sorting in FE is allowed
@@ -1501,10 +1500,14 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				}
 			}
 		} else {
-			// if sorting is predefined by admin
-			$orderBy = $this->ffdata['sortByAdmin'] ? $this->ffdata['sortByAdmin'] : $orderByField . ' ' . $orderByDir;
+			// if sort by admin is set to score, we can do this only when searchwords or tags are given
+			if(($this->ffdata['sortByAdmin'] == 'score ASC' || $this->ffdata['sortByAdmin'] == 'score DESC') && (!count($swords) || !count($tagsAgainst))) {
+				$orderBy = '';
+			} else {
+				$orderBy = $this->ffdata['sortByAdmin'] ? $this->ffdata['sortByAdmin'] : $orderByField . ' ' . $orderByDir;
+			}
 		}
-		if(!$orderBy) $orderBy = $orderByField . ' ' . $orderByDir;
+		//if(!$orderBy) $orderBy = $orderByField . ' ' . $orderByDir;
 
 		// get number of results with COUNT(*)
 		if ($numOnly) {

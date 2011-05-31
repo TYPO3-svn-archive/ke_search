@@ -162,7 +162,7 @@
 		<!-- ###SUB_FILTER_CHECKBOX_OPTION### end -->
 	    </span>
 		<li class="clearer"></li>
-	    <span class="resetlink" onclick="countInput=document.getElementById('kesearch_filters').getElementsByTagName('input').length;for(i=0;i<countInput;i++){document.getElementById('###FILTERID###['+i+']').value='';} ###ONCLICK_RESET###">Filter zur&uuml;cksetzen</span>
+	    <span class="resetlink" onclick="countInput=document.getElementById('list_###FILTERID###').getElementsByTagName('input').length;alert(countInput);for(i=0;i<countInput;i++){document.getElementById('###FILTERID###['+i+']').value='';} ###ONCLICK_RESET###">Filter zur&uuml;cksetzen</span>
 	</ul>
 	<!-- <input type="hidden" name="###FILTERNAME###" id="###FILTERID###" value="###VALUE###" /> -->
     </div>

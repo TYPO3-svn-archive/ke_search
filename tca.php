@@ -63,6 +63,14 @@ $TCA['tx_kesearch_filters'] = array (
 				'default' => '0'
 			)
 		),
+		'markAllCheckboxes' => array (
+			'exclude' => 0,
+			'label' => 'LLL:EXT:ke_search/locallang_db.xml:tx_kesearch_filters.markAllCheckboxes',
+			'config' => array (
+				'type'    => 'check',
+				'default' => '0'
+			)
+		),
 		'options' => array (
 			'label' => 'LLL:EXT:ke_search/locallang_db.xml:tx_kesearch_filters.options',
 			'config' => Array(
@@ -89,7 +97,7 @@ $TCA['tx_kesearch_filters'] = array (
 	'types' => array (
 		'select' => array('showitem' => 'hidden;;1;;1-1-1, title;;;;2-2-2, rendertype;;;;3-3-3, options, wrap;;;;4-4-4'),
 		'list' => array('showitem' => 'hidden;;1;;1-1-1, title;;;;2-2-2, rendertype;;;;3-3-3, expandbydefault, cssclass, options, wrap;;;;4-4-4'),
-		'checkbox' => array('showitem' => 'hidden;;1;;1-1-1, title;;;;2-2-2, rendertype;;;;3-3-3, expandbydefault, cssclass, options, wrap;;;;4-4-4')
+		'checkbox' => array('showitem' => 'hidden;;1;;1-1-1, title;;;;2-2-2, rendertype;;;;3-3-3, expandbydefault, markAllCheckboxes, cssclass, options, wrap;;;;4-4-4')
 	),
 	'palettes' => array (
 		'1' => array('showitem' => '')

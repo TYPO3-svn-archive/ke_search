@@ -12,6 +12,7 @@
 			<label index="tx_kesearch_filters.title">Title</label>
 			<label index="tx_kesearch_filters.rendertype">Rendering type</label>
 			<label index="tx_kesearch_filters.expandbydefault">Expand by default?</label>
+			<label index="tx_kesearch_filters.markAllCheckboxes">Mark all checkboxes by default?</label>
 			<label index="tx_kesearch_filters.options">Filter options</label>
 			<label index="tx_kesearch_filters.wrap">Wrap</label>
 			<label index="tx_kesearch_filters.rendertype">Rendering type</label>
@@ -68,6 +69,7 @@
 			<label index="tx_kesearch_filters.title">Titel</label>
 			<label index="tx_kesearch_filters.rendertype">Rendering Typ</label>
 			<label index="tx_kesearch_filters.expandbydefault">Standardmäßig aufklappen?</label>
+			<label index="tx_kesearch_filters.markAllCheckboxes">Markiere alle Checkboxen als Voreinstellung?</label>
 			<label index="tx_kesearch_filters.options">Filteroptionen</label>
 			<label index="tx_kesearch_filters.wrap">Wrap</label>
 			<label index="tx_kesearch_filters.rendertype">Rendering-Typ</label>
