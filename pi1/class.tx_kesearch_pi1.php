@@ -829,6 +829,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				$where,
 				'','',''
 			);
+			t3lib_div::devLog('db', 'db', -1, array($query));
 			$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 
 			while($tags = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -865,7 +866,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$query = $GLOBALS['TYPO3_DB']->SELECTquery(
 				'COUNT(*) as content',
 				'tx_kesearch_index',
-				'AND MATCH (content) AGAINST (\'' . $searchString . '\' IN BOOLEAN MODE)'
+				'MATCH (content) AGAINST (\'' . $searchString . '\' IN BOOLEAN MODE)'
 			);
 			$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 			$count = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
@@ -1370,13 +1371,25 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				}
 			}
 		}
-
-		return array(
+		
+		$wordsArray = array(
 			'sword' => $sword,
 			'swords' => $swords,
 			'wordsAgainst' => $wordsAgainst,
 			'scoreAgainst' => $scoreAgainst
 		);
+
+		// Hook: modifySearchWords
+		if(isset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['modifySearchWords'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF'][$this->extKey]['modifySearchWords'] as $classRef) {
+				$hookObj = t3lib_div::getUserObj($classRef);
+				if(method_exists($hookObj, 'modifySearchWords')) {
+					$hookObj->modifySearchWords($wordsArray, $this->cObj, $this->piVars);
+			    }
+			}			
+		}
+
+		return $wordsArray; 
 	}
 
 	/*
@@ -1526,7 +1539,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			}
 		} else {
 			// if sort by admin is set to score, we can do this only when searchwords or tags are given
-			if(($this->ffdata['sortByAdmin'] == 'score ASC' || $this->ffdata['sortByAdmin'] == 'score DESC') && (!count($swords) || !count($tagsAgainst))) {
+			if(($this->ffdata['sortByAdmin'] == 'score ASC' || $this->ffdata['sortByAdmin'] == 'score DESC') && !count($swords) && !count($tagsAgainst)) {
 				$orderBy = '';
 			} else {
 				$orderBy = $this->ffdata['sortByAdmin'] ? $this->ffdata['sortByAdmin'] : $orderByField . ' ' . $orderByDir;
