@@ -779,6 +779,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$sword = $searchWordInformation['sword'];
 			$swords = $searchWordInformation['swords'];
 			$wordsAgainst = $searchWordInformation['wordsAgainst'];
+			
+			$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
 
 			// get filter list
 			$filterList = explode(',', $this->ffdata['filters']);
@@ -813,8 +815,16 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				$where .= ' AND MATCH (tags) AGAINST (\''.$tagsAgainst.'\' IN BOOLEAN MODE) ';
 				$countMatches++;
 			}
-			if (count($swords)) {
-				$where .= ' AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+			if(count($swords)) {
+				// MATCH-AGAINST is really fast if there is only one searchword
+				if(count($swords) == 1 OR !intval($confArr['activateSubStringSearch'])) {
+					$where .= ' AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+				} else {
+					// LIKE is much faster if MATCH-AGAINST returns a mass of results
+					foreach($swords as $value) {
+						$where .= ' AND content LIKE "% ' . $value . '%" ';	
+					}
+				}
 				$countMatches++;
 			}
 			$where .= $this->cObj->enableFields($table);
@@ -829,7 +839,6 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				$where,
 				'','',''
 			);
-			t3lib_div::devLog('db', 'db', -1, array($query));
 			$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 
 			while($tags = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -1330,7 +1339,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 	public function buildWordSearchphrase() {
 		// prepare searchword for query
 		$sword = $this->div->removeXSS($this->piVars['sword']);
-
+		$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+		
 		// ignore default search box content
 		if (strtolower(trim($sword)) == strtolower($this->pi_getLL('searchbox_default_value'))) {
 			$sword = '';
@@ -1352,15 +1362,15 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			foreach ($swords as $key => $word) {
 				// ignore words under length of 4 chars
 				if (strlen($word) > 3) {
-
-
+					if(intval($confArr['activateSubStringSearch'])) $subString = '*';
+					
 					if ($this->UTF8QuirksMode) {
 						$scoreAgainst .= utf8_decode($word).' ';
-						$wordsAgainst .= '+'.utf8_decode($word).'* ';
+						$wordsAgainst .= '+' . utf8_decode($word) . $subString . ' ';
 					}
 					else {
 						$scoreAgainst .= $word.' ';
-						$wordsAgainst .= '+'.$word.'* ';
+						$wordsAgainst .= '+' . $word . $subString . ' ';
 					}
 
 				} else {
@@ -1405,7 +1415,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$wordsAgainst = $searchWordInformation['wordsAgainst'];
 		$scoreAgainst = $searchWordInformation['scoreAgainst'];
 
-
+		$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
+		
 		// build "tagged content only" searchphrase
 		if ($this->ffdata['showTaggedContentOnly']) {
 			$taggedOnlyWhere = ' AND tags<>"" ';
@@ -1443,7 +1454,15 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$where = '1=1 ';
 			$countMatches = 0;
 			if(!empty($wordsAgainst)) {
-				$where .= 'AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+				// MATCH-AGAINST is really fast if there is only one searchword
+				if(count($swords) == 1 OR !intval($confArr['activateSubStringSearch'])) {
+					$where .= ' AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+				} else {
+					// LIKE is much faster if MATCH-AGAINST returns a mass of results
+					foreach($swords as $value) {
+						$where .= ' AND content LIKE "% ' . $value . '%" ';	
+					}
+				}
 				$countMatches++;
 			}
 			if(($tagWhere = $this->div->createQueryForTags($tagsAgainst))) {
@@ -1498,7 +1517,15 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$where = '1=1 ';
 		$countMatches = 0;
 		if(!empty($wordsAgainst)) {
-			$where .= 'AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+			// MATCH-AGAINST is really fast if there is only one searchword
+			if(count($swords) == 1 OR !intval($confArr['activateSubStringSearch'])) {
+				$where .= ' AND MATCH (content) AGAINST (\''.$wordsAgainst.'\' IN BOOLEAN MODE) ';
+			} else {
+				// LIKE is much faster if MATCH-AGAINST returns a mass of results
+				foreach($swords as $value) {
+					$where .= ' AND content LIKE "% ' . $value . '%" ';	
+				}
+			}
 			$countMatches++;
 		}
 		if(($tagWhere = $this->div->createQueryForTags($tagsAgainst))) {
