@@ -143,8 +143,12 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			case 1:
 
 				$content = $this->cObj->getSubpart($this->templateCode,'###RESULT_LIST###');
+				
+				// get number of results
+				$this->numberOfResults = $this->getSearchResults(true);
+				$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', $this->numberOfResults);
 
-				if(count($this->piVars) == 0 && $this->ffdata['showTextInsteadOfResults']) {
+				if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
 					$content = $this->cObj->substituteMarker($content,'###MESSAGE###', $this->pi_RTEcssText($this->ffdata['textForResults']));
 					$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
 					$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
@@ -1020,7 +1024,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		// make xajax response object
 		$objResponse = new tx_xajax_response();
 
-		if(count($this->piVars) == 0 && $this->ffdata['showTextInsteadOfResults']) {
+		if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
 			$objResponse->addAssign("kesearch_results", "innerHTML", $this->pi_RTEcssText($this->ffdata['textForResults']));
 			$objResponse->addAssign("kesearch_query_time", "innerHTML", '');
 			$objResponse->addAssign("kesearch_ordering", "innerHTML", '');
@@ -1124,7 +1128,11 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		// make xajax response object
 		$objResponse = new tx_xajax_response();
 
-		if(!$filterString && !$this->piVars['sword'] && $this->ffdata['showTextInsteadOfResults']) {
+		if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
+			// get number of results
+			$this->numberOfResults = $this->getSearchResults(true);
+			$this->ffdata['textForResults'] = $this->cObj->substituteMarker($this->ffdata['textForResults'], '###NUMBER_OF_RECORDS###', $this->numberOfResults); 
+
 			$objResponse->addAssign("kesearch_results", "innerHTML", $this->pi_RTEcssText($this->ffdata['textForResults']));
 			$objResponse->addAssign("kesearch_query_time", "innerHTML", '');
 			$objResponse->addAssign("kesearch_ordering", "innerHTML", '');
@@ -1543,36 +1551,23 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$where .= $this->cObj->enableFields($table);
 
 		// add ordering
-		// predefine ordering. Can be overwritten.
-		$orderByField = (count($swords) || count($tagsAgainst)) ? 'score' : 'sortdate';
-		$orderByDir = 'DESC';
+		$orderBy = $this->ffdata['sortWithoutSearchword'];
 
-		// if sorting in FE is allowed
-		if($this->ffdata['showSortInFrontend']) {
-			$tempField = strtolower(t3lib_div::removeXSS($this->piVars['orderByField']));
-			$tempDir = strtolower(t3lib_div::removeXSS($this->piVars['orderByDir']));
-			if($tempField != '' && $tempDir != '') {
-				// overwrite ordering with piVars when allowed
-				if($this->ffdata['sortByVisitor'] != '' && t3lib_div::inList($this->ffdata['sortByVisitor'], $tempField)) {
-					$orderByField = $tempField;
-					$orderByDir = $tempDir;
+		if(count($swords)) {
+			// if sorting in FE is allowed
+			if($this->ffdata['showSortInFrontend']) {
+				$tempField = strtolower(t3lib_div::removeXSS($this->pObj->piVars['orderByField']));
+				$tempDir = strtolower(t3lib_div::removeXSS($this->pObj->piVars['orderByDir']));
+				if($tempField != '' && $tempDir != '') {
+					// overwrite ordering with piVars when allowed
+					if($this->conf['sortByVisitor'] != '' && t3lib_div::inList($this->ffdata['sortByVisitor'], $tempField)) {
+						$orderBy = $tempField . ' ' . $tempDir;
+					}
 				}
-			} else {
-				// if piVars for sorting are empty check if a sortword is given
-				if(!count($swords)) {
-					// if no searchword is given, order by setting in flexform
-					$orderBy = $this->ffdata['sortWithoutSearchword'] ? $this->ffdata['sortWithoutSearchword'] : $orderByField . ' ' . $orderByDir;
-				}
-			}
-		} else {
-			// if sort by admin is set to score, we can do this only when searchwords or tags are given
-			if(($this->ffdata['sortByAdmin'] == 'score ASC' || $this->ffdata['sortByAdmin'] == 'score DESC') && !count($swords) && !count($tagsAgainst)) {
-				$orderBy = '';
-			} else {
-				$orderBy = $this->ffdata['sortByAdmin'] ? $this->ffdata['sortByAdmin'] : $orderByField . ' ' . $orderByDir;
+			} else { // if sorting is predefined by admin
+				$orderBy = $this->ffdata['sortByAdmin'];
 			}
 		}
-		//if(!$orderBy) $orderBy = $orderByField . ' ' . $orderByDir;
 
 		// get number of results with COUNT(*)
 		if ($numOnly) {
@@ -1874,7 +1869,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$content .= $this->onloadImage;
 
 		// Show a text (if defined in FF) if searchbox was opened without any piVars
-		if($wordsAgainst == '' && $tagsAgainst == '' && $this->ffdata['showTextInsteadOfResults']) {
+		if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
 			$content = $this->pi_RTEcssText($this->ffdata['textForResults']);
 		}
 
@@ -2497,6 +2492,37 @@ class tx_kesearch_pi1 extends tslib_pibase {
 
 	}
 
+
+	/**
+	 * function isEmptySearch
+	 * checks if an empty search was loaded / submitted
+	 *
+	 * @return boolean true if no searchparams given; otherwise false
+	 */
+	protected function isEmptySearch() {
+		// build words searchphrase
+		$searchWordInformation = $this->buildWordSearchphrase();
+		$sword = $searchWordInformation['sword'];
+		$swords = $searchWordInformation['swords'];
+		$wordsAgainst = $searchWordInformation['wordsAgainst'];
+		$scoreAgainst = $searchWordInformation['scoreAgainst'];
+
+		// check if searchword is emtpy or equal with default searchbox value
+		$emptySearchword = (empty($sword) || $sword == $this->pi_getLL('searchbox_default_value')) ? true : false;
+
+		// check if filters are set
+		$this->filters = $this->getFilters();
+		$filterSet = false;
+		if(is_array($this->filters))  {
+			//TODO: piVars filter is a multidimensional array
+			foreach($this->filters as $uid => $data)  {
+				if(!empty($this->piVars['filter'][$uid])) $filterSet = true;
+			}
+		}
+
+		if($emptySearchword && !$filterSet) return true;
+		else return false;
+	}
 
 
 	/*
