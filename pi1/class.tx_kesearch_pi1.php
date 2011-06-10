@@ -2548,11 +2548,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			}
 
 			function enableCheckboxes(filter) {
-				allLi = document.getElementsByName(\'optionCheckBox\' + filter);
-				allCb = new Array();
-				for(i = 0; i < allLi.length; i++) {
-					allCb[i] = allLi[i].getElementsByTagName(\'input\');
-				}
+				allCb = document.getElementById(\'options_filter[\'+filter+\']\').getElementsByTagName(\'input\');
 				allCbChecked = true;
 				for(i = 0; i < allCb.length; i++) {
 					if(!allCb[i][0].checked) {
