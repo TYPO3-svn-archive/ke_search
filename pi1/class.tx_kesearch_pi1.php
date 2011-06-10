@@ -1319,6 +1319,9 @@ class tx_kesearch_pi1 extends tslib_pibase {
 	 * function buildTagSearchphrase
 	 */
 	function buildTagSearchphrase() {
+		foreach($this->preselectedFilter as $value) {
+			$against[0] .= ' +"#' . $value . '#"';
+		}
 		// build tag searchphrase
 		$against = array();
 		if (is_array($this->piVars['filter'])) {
@@ -1449,7 +1452,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$this->setCountResults($wordsAgainst, $tagsAgainst);
 
 		// get max score only (searchword entered)
-		if ($maxScore && count($swords)) {
+		if ($maxScore && !$this->isEmptySearch()) {
 
 			// Generate query for determing the max score
 			// ----------------------------------------------------------
@@ -2519,6 +2522,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				if(!empty($this->piVars['filter'][$uid])) $filterSet = true;
 			}
 		}
+		// check for preselected filters
+		if(count($this->preselectedFilter)) $filterSet = true;
 
 		if($emptySearchword && !$filterSet) return true;
 		else return false;
