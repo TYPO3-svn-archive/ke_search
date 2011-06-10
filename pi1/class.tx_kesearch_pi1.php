@@ -2551,17 +2551,17 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				allCb = document.getElementById(\'options_filter[\'+filter+\']\').getElementsByTagName(\'input\');
 				allCbChecked = true;
 				for(i = 0; i < allCb.length; i++) {
-					if(!allCb[i][0].checked) {
+					if(!allCb[i].checked) {
 						allCbChecked = false;
 					}
 				}
 				if(allCbChecked) {
 					for(i = 0; i < allCb.length; i++) {
-						allCb[i][0].checked = false;
+						allCb[i].checked = false;
 					}
 				} else {
 					for(i = 0; i < allCb.length; i++) {
-						allCb[i][0].checked = true;
+						allCb[i].checked = true;
 					}
 				}
 			}
