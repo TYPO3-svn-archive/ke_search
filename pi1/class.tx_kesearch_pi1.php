@@ -143,7 +143,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			case 1:
 
 				$content = $this->cObj->getSubpart($this->templateCode,'###RESULT_LIST###');
-				
+
 				// get number of results
 				$this->numberOfResults = $this->getSearchResults(true);
 				$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', $this->numberOfResults);
@@ -783,7 +783,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$sword = $searchWordInformation['sword'];
 			$swords = $searchWordInformation['swords'];
 			$wordsAgainst = $searchWordInformation['wordsAgainst'];
-			
+
 			$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
 
 			// get filter list
@@ -826,7 +826,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				} else {
 					// LIKE is much faster if MATCH-AGAINST returns a mass of results
 					foreach($swords as $value) {
-						$where .= ' AND content LIKE "% ' . $value . '%" ';	
+						$where .= ' AND content LIKE "% ' . $value . '%" ';
 					}
 				}
 				$countMatches++;
@@ -1131,7 +1131,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
 			// get number of results
 			$this->numberOfResults = $this->getSearchResults(true);
-			$this->ffdata['textForResults'] = $this->cObj->substituteMarker($this->ffdata['textForResults'], '###NUMBER_OF_RECORDS###', $this->numberOfResults); 
+			$this->ffdata['textForResults'] = $this->cObj->substituteMarker($this->ffdata['textForResults'], '###NUMBER_OF_RECORDS###', $this->numberOfResults);
 
 			$objResponse->addAssign("kesearch_results", "innerHTML", $this->pi_RTEcssText($this->ffdata['textForResults']));
 			$objResponse->addAssign("kesearch_query_time", "innerHTML", '');
@@ -1351,7 +1351,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		// prepare searchword for query
 		$sword = $this->div->removeXSS($this->piVars['sword']);
 		$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
-		
+
 		// ignore default search box content
 		if (strtolower(trim($sword)) == strtolower($this->pi_getLL('searchbox_default_value'))) {
 			$sword = '';
@@ -1374,7 +1374,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				// ignore words under length of 4 chars
 				if (strlen($word) > 3) {
 					if(intval($confArr['activateSubStringSearch'])) $subString = '*';
-					
+
 					if ($this->UTF8QuirksMode) {
 						$scoreAgainst .= utf8_decode($word).' ';
 						$wordsAgainst .= '+' . utf8_decode($word) . $subString . ' ';
@@ -1392,7 +1392,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				}
 			}
 		}
-		
+
 		$wordsArray = array(
 			'sword' => $sword,
 			'swords' => $swords,
@@ -1407,10 +1407,10 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				if(method_exists($hookObj, 'modifySearchWords')) {
 					$hookObj->modifySearchWords($wordsArray, $this->cObj, $this->piVars);
 			    }
-			}			
+			}
 		}
 
-		return $wordsArray; 
+		return $wordsArray;
 	}
 
 	/*
@@ -1427,7 +1427,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		$scoreAgainst = $searchWordInformation['scoreAgainst'];
 
 		$confArr = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
-		
+
 		// build "tagged content only" searchphrase
 		if ($this->ffdata['showTaggedContentOnly']) {
 			$taggedOnlyWhere = ' AND tags<>"" ';
@@ -1471,7 +1471,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				} else {
 					// LIKE is much faster if MATCH-AGAINST returns a mass of results
 					foreach($swords as $value) {
-						$where .= ' AND content LIKE "% ' . $value . '%" ';	
+						$where .= ' AND content LIKE "% ' . $value . '%" ';
 					}
 				}
 				$countMatches++;
@@ -1487,7 +1487,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 
 			// add enable fields
 			$where .= $this->cObj->enableFields($table);
-			
+
 			if($countMatches == 2) {
 				$index = ' USE INDEX (' . $this->indexToUse . ')';
 			}
@@ -1534,7 +1534,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			} else {
 				// LIKE is much faster if MATCH-AGAINST returns a mass of results
 				foreach($swords as $value) {
-					$where .= ' AND content LIKE "% ' . $value . '%" ';	
+					$where .= ' AND content LIKE "% ' . $value . '%" ';
 				}
 			}
 			$countMatches++;
@@ -1584,7 +1584,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		if(count($swords)) {
 			$query = $GLOBALS['TYPO3_DB']->SELECTquery(
 				$fields,
-				$table . $index, 
+				$table . $index,
 				$where, '', '', $limit
 			);
 			$query = $GLOBALS['TYPO3_DB']->SELECTquery('*', '(' . $query . ') as results', '', '', 'results.' . $orderBy, '');
@@ -1695,7 +1695,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				// always show abstract
 				if (!empty($row['abstract'])) {
 					$teaserContent = nl2br($row['abstract']);
-					$teaserContent = $this->buildTeaserContent($teaserContent);
+					$teaserContent = $this->buildTeaserContent($teaserContent, $swords);
 					// highlight hits?
 					/*
 					if ($this->ffdata['highlightSword'] && count($swords)) {
@@ -1720,7 +1720,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 					}
 					if ($abstractHit) {
 						$teaserContent = nl2br($row['abstract']);
-						$teaserContent = $this->buildTeaserContent($teaserContent);
+						$teaserContent = $this->buildTeaserContent($teaserContent, $swords);
 						// highlight hits?
 						/*
 						if ($this->ffdata['highlightSword'] && count($swords)) {
