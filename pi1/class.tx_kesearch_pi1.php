@@ -157,6 +157,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 					$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
 					$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_BOTTOM###', '');
 					$content = $this->cObj->substituteMarker($content,'###ORDERING###', '');
+					$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', '');
 				} else {
 					if ($this->ffdata['renderMethod'] == 'ajax_after_reload') {
 						$content = $this->cObj->substituteMarker($content,'###MESSAGE###', '');
@@ -166,6 +167,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 						$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
 						$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
 						$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_BOTTOM###', '');
+						$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', '');
 						return $this->pi_wrapInBaseClass($content);
 					}
 
@@ -193,15 +195,15 @@ class tx_kesearch_pi1 extends tslib_pibase {
 					if ($this->ffdata['showPercentalScore'] || $this->ffdata['showScoreScale']) {
 						$this->maxScore = $this->getSearchResults(false, true);
 					}
-					$content = $this->cObj->substituteMarker($content,'###MESSAGE###', $this->getSearchResults());
-					$content = $this->cObj->substituteMarker($content,'###ORDERING###', $this->renderOrdering());
-					$content = $this->cObj->substituteMarker($content,'###SPINNER###', $this->spinnerImageResults);
-					$content = $this->cObj->substituteMarker($content,'###LOADING###', $this->pi_getLL('loading'));
-					$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
+					$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $this->getSearchResults());
+					$content = $this->cObj->substituteMarker($content, '###ORDERING###', $this->renderOrdering());
+					$content = $this->cObj->substituteMarker($content, '###SPINNER###', $this->spinnerImageResults);
+					$content = $this->cObj->substituteMarker($content, '###LOADING###', $this->pi_getLL('loading'));
+					$content = $this->cObj->substituteMarker($content, '###QUERY_TIME###', '');
+					$content = $this->cObj->substituteMarker($content, '###NUMBER_OF_RESULTS###', $this->pi_getLL('num_results') . $this->numberOfResults);
 				}
 
 				break;
-
 		}
 
 		return $this->pi_wrapInBaseClass($content);
@@ -1138,13 +1140,14 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$this->numberOfResults = $this->getSearchResults(true);
 			$this->ffdata['textForResults'] = $this->cObj->substituteMarker($this->ffdata['textForResults'], '###NUMBER_OF_RECORDS###', $this->numberOfResults);
 
-			$objResponse->addAssign("kesearch_results", "innerHTML", $this->pi_RTEcssText($this->ffdata['textForResults']));
-			$objResponse->addAssign("kesearch_query_time", "innerHTML", '');
-			$objResponse->addAssign("kesearch_ordering", "innerHTML", '');
-			$objResponse->addAssign("kesearch_pagebrowser_top", "innerHTML", '');
-			$objResponse->addAssign("kesearch_pagebrowser_bottom", "innerHTML", '');
-			$objResponse->addAssign("kesearch_updating_results", "innerHTML", '');
-			$objResponse->addAssign("kesearch_filters", "innerHTML", $this->renderFilters().$this->onloadImage);
+			$objResponse->addAssign('kesearch_results', 'innerHTML', $this->pi_RTEcssText($this->ffdata['textForResults']));
+			$objResponse->addAssign('kesearch_query_time', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_ordering', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_pagebrowser_top', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_pagebrowser_bottom', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_updating_results', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_num_results', 'innerHTML', '');
+			$objResponse->addAssign('kesearch_filters', 'innerHTML', $this->renderFilters().$this->onloadImage);
 		} else {
 			// get number of results
 			$this->numberOfResults = $this->getSearchResults(true);
@@ -1180,8 +1183,9 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			// set search results
 			// process if on result page
 			if ($GLOBALS['TSFE']->id == $this->ffdata['resultPage']) {
-				$objResponse->addAssign("kesearch_results", "innerHTML", $this->getSearchResults());
-				$objResponse->addAssign("kesearch_ordering", "innerHTML", $this->renderOrdering());
+				$objResponse->addAssign('kesearch_results', 'innerHTML', $this->getSearchResults());
+				$objResponse->addAssign('kesearch_num_results', 'innerHTML', $this->pi_getLL('num_results') . $this->numberOfResults);
+				$objResponse->addAssign('kesearch_ordering', 'innerHTML', $this->renderOrdering());
 			}
 
 			// set end milliseconds for query time calculation
