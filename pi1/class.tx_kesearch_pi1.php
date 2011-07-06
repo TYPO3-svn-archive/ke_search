@@ -998,12 +998,12 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			if (stristr($key,'xajax_')) $found = true;
 		}
 		$GLOBALS['TSFE']->additionalHeaderData['xajax_search_filters'] = $this->xajax->getJavascript( "typo3conf/ext/xajax/");
-		$GLOBALS['TSFE']->additionalHeaderData['xajax_search_filters'] .= '<script type="text/javascript">function tx_kesearch_pi1refresh(){ return xajax.call("refresh", arguments, 1);}</script>';
+		$GLOBALS['TSFE']->additionalHeaderData['xajax_search_filters'] .= '<script type="text/javascript">//<![CDATA[function tx_kesearch_pi1refresh(){ return xajax.call("refresh", arguments, 1);}//]]></script>';
 		if ($this->ffdata['renderMethod'] != 'static') {
-			$GLOBALS['TSFE']->additionalHeaderData['xajax_search_onload'] = '<script type="text/javascript">function tx_kesearch_pi1refreshResultsOnLoad(){ return xajax.call("refreshResultsOnLoad", arguments, 1);}</script>';
-			$GLOBALS['TSFE']->additionalHeaderData['xajax_search_onload'] .= '<script type="text/javascript">function tx_kesearch_pi1refreshFiltersOnLoad(){ return xajax.call("refreshFiltersOnLoad", arguments, 1);}</script>';
+			$GLOBALS['TSFE']->additionalHeaderData['xajax_search_onload'] = '<script type="text/javascript">//<![CDATA[function tx_kesearch_pi1refreshResultsOnLoad(){ return xajax.call("refreshResultsOnLoad", arguments, 1);}//]]></script>';
+			$GLOBALS['TSFE']->additionalHeaderData['xajax_search_onload'] .= '<script type="text/javascript">//<![CDATA[function tx_kesearch_pi1refreshFiltersOnLoad(){ return xajax.call("refreshFiltersOnLoad", arguments, 1);}//]]></script>';
 		}
-		$GLOBALS['TSFE']->additionalHeaderData['xajax_search_reset'] = '<script type="text/javascript">function tx_kesearch_pi1resetSearchbox(){ return xajax.call("resetSearchbox", arguments, 1);}</script>';
+		$GLOBALS['TSFE']->additionalHeaderData['xajax_search_reset'] = '<script type="text/javascript">//<![CDATA[function tx_kesearch_pi1resetSearchbox(){ return xajax.call("resetSearchbox", arguments, 1);}//]]></script>';
 	}
 
 
@@ -2765,10 +2765,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			';
 		}
 
-		$jsContent = '<script type="text/javascript">'.$jsContent.'</script>';
+		$jsContent = '<script type="text/javascript">//<![CDATA['.$jsContent.'//]]></script>';
 
-		// minify JS?
-		if (version_compare(TYPO3_version, '4.2.0', '>=' )) $jsContent = t3lib_div::minifyJavaScript($jsContent);
 		// add JS to page header
 		$GLOBALS['TSFE']->additionalHeaderData[$this->prefixId.'_jsContent'] = $jsContent;
 
