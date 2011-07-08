@@ -149,7 +149,7 @@ class tx_kesearch_div {
 		foreach ($piVars as $key => $value) {
 
 			// process removeXSS(...) for all piVars
-			$piVars[$key] = $this->removeXSS($value);
+			if(!is_array($piVars)) $piVars[$key] = $this->removeXSS($value);
 
 			// process further cleaning regarding to param type
 			switch ($key) {

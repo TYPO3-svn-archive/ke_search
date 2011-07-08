@@ -813,6 +813,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 				}
 			}
 			$tagsAgainst = $this->div->removeXSS($tagsAgainst);
+			$tagsAgainst = $this->buildTagSearchphrase();
 
 			$this->setCountResults($wordsAgainst, $tagsAgainst);
 
@@ -820,8 +821,8 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$table = 'tx_kesearch_index';
 			$where = '1=1';
 			$countMatches = 0;
-			if($tagsAgainst) {
-				$where .= ' AND MATCH (tags) AGAINST (\''.$tagsAgainst.'\' IN BOOLEAN MODE) ';
+			if(($tagWhere = $this->div->createQueryForTags($tagsAgainst))) {
+				$where .= $tagWhere;
 				$countMatches++;
 			}
 			if(count($swords)) {
@@ -1324,24 +1325,34 @@ class tx_kesearch_pi1 extends tslib_pibase {
 	 * function buildTagSearchphrase
 	 */
 	function buildTagSearchphrase() {
-		foreach($this->preselectedFilter as $value) {
-			$against[0] .= ' +"#' . $value . '#"';
+		foreach($this->preselectedFilter as $key => $value) {
+			// if we are in checkbox mode
+			if(count($this->preselectedFilter[$key]) >= 2) {
+				$tagsAgainst[$key] .= ' "#' . implode('#" "#', $value) . '#"';
+			// if we are in select or list mode
+			} elseif(count($this->preselectedFilter[$key]) == 1) {
+				$tagsAgainst[$key] .= ' +"#' . current($value) . '#"';
+			}
 		}
-		// build tag searchphrase
-		$against = array();
-		if (is_array($this->piVars['filter'])) {
-			foreach ($this->piVars['filter'] as $key => $tag)  {
-				if (is_array($this->piVars['filter'][$key])) {
-					foreach ($this->piVars['filter'][$key] as $subkey => $subtag)  {
-						// Don't add a "+", because we are here in checkbox mode
-						if (!empty($subtag)) $against[($key + 1)] .= ' "#'.$GLOBALS['TYPO3_DB']->quoteStr($subtag, 'tx_kesearch_index').'#" ';
+		if(is_array($this->piVars['filter'])) {
+			foreach($this->piVars['filter'] as $key => $tag)  {
+				if(is_array($this->piVars['filter'][$key])) {
+					foreach($this->piVars['filter'][$key] as $subkey => $subtag)  {
+						// Don't add the tag if it is already inserted by preselected filters
+						if(!empty($subtag) && strstr($tagsAgainst[$key], $subtag) === false) {
+							// Don't add a "+", because we are here in checkbox mode. It's a OR.
+							$tagsAgainst[$key] .= ' "#' . $subtag . '#" ';
+						}
 					}
 				} else {
-					if (!empty($tag)) $against[0] .= ' +"#'.$GLOBALS['TYPO3_DB']->quoteStr($tag, 'tx_kesearch_index').'#" ';
+					// Don't add the tag if it is already inserted by preselected filters
+					if(!empty($tag) && strstr($tagsAgainst[$key], $subtag) === false) {
+						$tagsAgainst[$key] .= ' +"#' . $tag . '#" ';
+					}
 				}
 			}
 		}
-		return $against;
+		return $tagsAgainst;
 	}
 
 
@@ -2372,18 +2383,21 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		if ($this->ffdata['mode'] == 0 && $this->ffdata['preselected_filters']) {
 			$preselectedArray = t3lib_div::trimExplode(',', $this->ffdata['preselected_filters'], true);
 			foreach ($preselectedArray as $key => $option) {
-				$fields = '*, tx_kesearch_filters.uid as filteruid';
+				$fields = '
+					tx_kesearch_filters.uid as filteruid,
+					tx_kesearch_filteroptions.uid as optionuid,
+					tx_kesearch_filteroptions.tag
+				';
 				$table = 'tx_kesearch_filters, tx_kesearch_filteroptions';
 				$where = $GLOBALS['TYPO3_DB']->listQuery('options', intval($option), 'tx_kesearch_filters');
 				$where .= ' AND tx_kesearch_filteroptions.uid = '.intval($option);
 				$where .= $this->cObj->enableFields('tx_kesearch_filters');
 				$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='');
 				while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
-					$this->preselectedFilter[$row['filteruid']] = $row['tag'];
+					$this->preselectedFilter[$row['filteruid']][$row['optionuid']] = $row['tag'];
 				}
 			}
 		}
-
 	}
 
 	/*
