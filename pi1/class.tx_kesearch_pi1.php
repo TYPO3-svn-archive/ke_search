@@ -1949,7 +1949,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 	 * function calculateScore
 	 */
 	function calculateScorePercent($currentScore) {
-		if ($this->maxScore) return ceil(($currentScore * 100) / $this->maxScore);
+		if ($this->maxScore) return round(($currentScore * 100) / $this->maxScore);
 		else return 0;
 	}
 
