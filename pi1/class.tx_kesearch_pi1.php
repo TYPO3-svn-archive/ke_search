@@ -147,17 +147,14 @@ class tx_kesearch_pi1 extends tslib_pibase {
 
 				$content = $this->cObj->getSubpart($this->templateCode,'###RESULT_LIST###');
 
-				// get number of results
-				$this->numberOfResults = $this->getSearchResults(true);
-				$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', $this->numberOfResults);
-
 				if($this->isEmptySearch() && $this->ffdata['showTextInsteadOfResults']) {
-					$content = $this->cObj->substituteMarker($content,'###MESSAGE###', $this->pi_RTEcssText($this->ffdata['textForResults']));
-					$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
-					$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
-					$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_BOTTOM###', '');
-					$content = $this->cObj->substituteMarker($content,'###ORDERING###', '');
-					$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', '');
+					$content = '<div id="kesearch_pagebrowser_top"></div>';
+					$content .= '<div id="kesearch_results">'.$this->pi_RTEcssText($this->conf['textForResults']).'</div>';
+					$content .= '<div id="kesearch_updating_results"></div>';
+					$content .= '<div id="kesearch_pagebrowser_bottom"></div>';
+					$content .= '<div id="kesearch_query_time"></div>';
+					$content = $this->cObj->substituteMarker($content, '###NUMBER_OF_RESULTS###', $this->getSearchResults(true));
+					return $content;
 				} else {
 					if ($this->ffdata['renderMethod'] == 'ajax_after_reload') {
 						$content = $this->cObj->substituteMarker($content,'###MESSAGE###', '');
