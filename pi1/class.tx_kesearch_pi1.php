@@ -74,7 +74,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 
 		// GET FLEXFORM DATA
 		$this->initFlexforms();
-		
+
 		// clean piVars
 		$this->piVars = $this->div->cleanPiVars($this->piVars);
 
@@ -98,7 +98,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 		// get css file (include only in searchbox -> avoid duplicate css)
 		if ($this->ffdata['mode'] == 0) {
 			$cssFile = $this->conf['cssFile'] ? $this->conf['cssFile'] : t3lib_extMgm::siteRelPath($this->extKey).'res/ke_search_pi1.css';
-			$GLOBALS['TSFE']->additionalHeaderData[$this->prefixId.'_css'] = '<link rel="stylesheet" type="text/css" href="'.$cssFile.'" / >';
+			$GLOBALS['TSFE']->additionalHeaderData[$this->prefixId.'_css'] = '<link rel="stylesheet" type="text/css" href="'.$cssFile.'" />';
 		}
 
 		// get preselected filter from rootline
