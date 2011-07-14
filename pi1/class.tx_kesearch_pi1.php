@@ -1628,7 +1628,7 @@ class tx_kesearch_pi1 extends tslib_pibase {
 			$content = $this->cObj->getSubpart($this->templateCode,'###GENERAL_MESSAGE###');
 
 			// check if searchwords were too short
-			if (!empty($this->piVars['sword']) && !count($swords)) {
+			if (!empty($this->piVars['sword']) && !count($swords) && empty($tagsAgainst)) {
 				if ($this->UTF8QuirksMode) $content = $this->cObj->substituteMarker($content,'###MESSAGE###', utf8_encode($this->pi_getLL('searchword_length_error')));
 				else $content = $this->cObj->substituteMarker($content,'###MESSAGE###', $this->pi_getLL('searchword_length_error'));
 			}
