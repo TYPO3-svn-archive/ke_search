@@ -413,14 +413,16 @@ class tx_kesearch_pi1 extends tslib_pibase {
 								// selected / preselected?
 								$selected = 0;
 
+								// if GET/POST var equals current tag. Used for select and list rendering
 								if ($this->piVars['filter'][$filterUid] == $row['tag']) {
 									$selected = 1;
-								} else if (is_array($this->piVars['filter'][$filterUid])) {
+								} else if (is_array($this->piVars['filter'][$filterUid])) { // check GET/POST vars against multi selection
 									if(t3lib_div::inArray($this->piVars['filter'][$filterUid], $row['tag'])) {
 										$selected = 1;
 									}
 								} else if (!isset($this->piVars['filter'][$filterUid]) && !is_array($this->piVars['filter'][$filterUid])) {
-									if (is_array($this->preselectedFilter) && in_array($row['tag'], $this->preselectedFilter)) {
+									// if there are no GET/POST vars for current filter check if we have some preselected filters set
+									if (is_array($this->preselectedFilter[$filterUid]) && in_array($row['tag'], $this->preselectedFilter[$filterUid])) {
 										$selected = 1;
 										$this->piVars['filter'][$filterUid] = $row['tag'];
 									}
