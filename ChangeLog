@@ -1,6 +1,6 @@
 ChangeLog
 
-Current Trunk
+Version 1.5.0, September 2013
 * feature: indexer for ext:news
 * feature: create filter options from ext:news categories automatically while indexing
 * feature: hidden filters. Set hidden filters together with preselected filter options in plugin configuration in order to have preselected filters which are not shown in the frontend.
@@ -16,7 +16,7 @@ Current Trunk
 Version 1.4.1, July 2013
 * security bugfix
 
-Version 1.4, Januar 2013
+Version 1.4, January 2013
 * Feature: Now you can add multiple TV-fields divided by comma
 * Feature: Added indexer for extension "comments".
 
