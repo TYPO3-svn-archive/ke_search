@@ -297,7 +297,7 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 			';
 
 			$this->content .= '<div id="typo3-docheader"><div class="typo3-docheader-functions">';
-			$this->content .= $this->doc->funcMenu(t3lib_BEfunc::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']));
+			$this->content .= $this->doc->funcMenu('',t3lib_BEfunc::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']));
 			$this->content .= '</div></div>';
 			$this->content .= '<div id="typo3-docbody"><div id="typo3-inner-docbody">';
 			$this->content .= $this->doc->startPage($GLOBALS['LANG']->getLL('title'));
