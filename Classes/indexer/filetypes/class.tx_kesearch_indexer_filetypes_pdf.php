@@ -47,7 +47,13 @@ class tx_kesearch_indexer_filetypes_pdf extends tx_kesearch_indexer_types_file i
 		if ($this->extConf['pathPdftotext']) {
 			$pathPdftotext = rtrim($this->extConf['pathPdftotext'], '/') . '/';
 			$pathPdfinfo = rtrim($this->extConf['pathPdfinfo'], '/') . '/';
-			$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
+			} else {
+				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+			}
+
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
 			if ($safeModeEnabled || (@is_file($pathPdftotext . 'pdftotext' . $exe) && @is_file($pathPdfinfo . 'pdfinfo' . $exe))) {
 				$this->app['pdfinfo'] = $pathPdfinfo . 'pdfinfo' . $exe;
@@ -78,22 +84,40 @@ class tx_kesearch_indexer_filetypes_pdf extends tx_kesearch_indexer_types_file i
 			$this->fileInfo = t3lib_div::makeInstance('tx_kesearch_lib_fileinfo');
 		}
 		$this->fileInfo->setFile($file);
+
 		// get PDF informations
 		if (!$pdfInfo = $this->getPdfInfo($file))
 			return false;
 
 		// proceed only of there are any pages found
 		if (intval($pdfInfo['pages']) && $this->isAppArraySet) {
+
 			// create the tempfile which will contain the content
-			$tempFileName = t3lib_div::tempnam('news_files-Indexer');
-			@unlink($tempFileName); // Delete if exists, just to be safe.
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$tempFileName = TYPO3\CMS\Core\Utility\GeneralUtility::tempnam('pdf_files-Indexer');
+			} else {
+				$tempFileName = t3lib_div::tempnam('pdf_files-Indexer');
+			}
+
+			// Delete if exists, just to be safe.
+			@unlink($tempFileName);
+
 			// generate and execute the pdftotext commandline tool
 			$cmd = $this->app['pdftotext'] . ' -enc UTF-8 -q ' . escapeshellarg($file) . ' ' . $tempFileName;
-			t3lib_utility_Command::exec($cmd);
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				TYPO3\CMS\Core\Utility\CommandUtility::exec($cmd);
+			} else {
+				t3lib_utility_Command::exec($cmd);
+			}
 
 			// check if the tempFile was successfully created
 			if (@is_file($tempFileName)) {
-				$content = t3lib_div::getUrl($tempFileName);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$content = TYPO3\CMS\Core\Utility\GeneralUtility::getUrl($tempFileName);
+				} else {
+					$content = t3lib_div::getUrl($tempFileName);
+				}
 				unlink($tempFileName);
 			}
 			else

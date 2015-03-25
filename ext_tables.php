@@ -37,7 +37,11 @@ t3lib_extMgm::addPiFlexFormValue($_EXTKEY . '_pi1', 'FILE:EXT:ke_search/pi1/flex
 t3lib_extMgm::addPiFlexFormValue($_EXTKEY . '_pi2', 'FILE:EXT:ke_search/pi2/flexform_pi2.xml');
 t3lib_extMgm::addPiFlexFormValue($_EXTKEY . '_pi3', 'FILE:EXT:ke_search/pi3/flexform_pi3.xml');
 
-t3lib_div::loadTCA('pages');
+if (TYPO3_VERSION_INTEGER < 6001000) {
+	t3lib_div::loadTCA('pages');
+	t3lib_div::loadTCA('tt_content');
+}
+
 t3lib_extMgm::addTCAcolumns('pages', $tempColumns, 1);
 t3lib_extMgm::addToAllTCAtypes('pages', 'tx_kesearch_tags;;;;1-1-1');
 
@@ -46,7 +50,6 @@ if (TYPO3_MODE == 'BE') {
 	t3lib_extMgm::addModule('web', 'txkesearchM1', '', t3lib_extMgm::extPath($_EXTKEY) . 'mod1/');
 }
 
-t3lib_div::loadTCA('tt_content');
 $TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY . '_pi1'] = 'layout,select_key';
 $TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY . '_pi2'] = 'layout,select_key';
 $TCA['tt_content']['types']['list']['subtypes_excludelist'][$_EXTKEY . '_pi3'] = 'layout,select_key';

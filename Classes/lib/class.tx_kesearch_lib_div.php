@@ -97,12 +97,17 @@ class tx_kesearch_lib_div {
 	* @return string XSS safe value
 	*/
 	public function removeXSS($value) {
-		if(method_exists(t3lib_div, 'removeXSS')) {
-			return t3lib_div::removeXSS($value);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$returnValue = TYPO3\CMS\Core\Utility\GeneralUtility::removeXSS($value);
 		} else {
-			require_once(t3lib_extMgm::extPath($this->extKey) . 'res/scripts/RemoveXSS.php');
-			return RemoveXSS::process($value);
+			if(method_exists(t3lib_div, 'removeXSS')) {
+				$returnValue = t3lib_div::removeXSS($value);
+			} else {
+				require_once(t3lib_extMgm::extPath($this->extKey) . 'res/scripts/RemoveXSS.php');
+				$returnValue = RemoveXSS::process($value);
+			}
 		}
+		return $returnValue;
 	}
 
 

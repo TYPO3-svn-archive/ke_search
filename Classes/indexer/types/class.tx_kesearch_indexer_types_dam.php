@@ -69,8 +69,15 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 				$where .= ' AND uid_foreign IN (' . implode(',', $categories) . ')';
 			}
 		}
-		$where .= t3lib_befunc::BEenableFields('tx_dam');
-		$where .= t3lib_befunc::deleteClause('tx_dam');
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_dam');
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_dam');
+		} else {
+			$where .= t3lib_befunc::BEenableFields('tx_dam');
+			$where .= t3lib_befunc::deleteClause('tx_dam');
+		}
+
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where);
 		$resCount = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
 		if ($resCount) {
@@ -92,7 +99,11 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 				// get tags for this record
 				// needs extension ke_search_dam_tags
 				if (t3lib_extMgm::isLoaded('ke_search_dam_tags')) {
-					$damRecordTags = t3lib_div::trimExplode(',',$damRecord['tx_kesearchdamtags_tags'], true);
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$damRecordTags = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',',$damRecord['tx_kesearchdamtags_tags'], true);
+					} else {
+						$damRecordTags = t3lib_div::trimExplode(',',$damRecord['tx_kesearchdamtags_tags'], true);
+					}
 					$tags = '';
 					$clearTextTags = '';
 					if (count($damRecordTags)) {
@@ -114,7 +125,11 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 					// hook for custom modifications of the indexed data, e. g. the tags
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyDAMIndexEntry'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyDAMIndexEntry'] as $_classRef) {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+						} else {
+							$_procObj = & t3lib_div::getUserObj($_classRef);
+						}
 						$_procObj->modifyDAMIndexEntry(
 							$title,
 							$abstract,
@@ -171,7 +186,11 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 	 */
 	public function getCategories() {
 		// remove empty values from category list
-		$indexerCategories = t3lib_div::trimExplode(',', $this->indexerConfig['index_dam_categories'], true);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$indexerCategories = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->indexerConfig['index_dam_categories'], true);
+		} else {
+			$indexerCategories = t3lib_div::trimExplode(',', $this->indexerConfig['index_dam_categories'], true);
+		}
 
 		// if valid array then make array unique
 		if(is_array($indexerCategories) && count($indexerCategories)) {
@@ -184,7 +203,11 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 				$categories[] = $this->getRecursiveDAMCategories($value);
 			}
 			// remove empty values from list and make array unique
-			$categories = t3lib_div::trimExplode(',', implode(',', $categories), true);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$categories = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', implode(',', $categories), true);
+			} else {
+				$categories = t3lib_div::trimExplode(',', implode(',', $categories), true);
+			}
 			$indexerCategories = array_unique($categories);
 		}
 
@@ -205,24 +228,40 @@ class tx_kesearch_indexer_types_dam extends tx_kesearch_indexer_types {
 	 */
 	public function getRecursiveDAMCategories($catUid, $depth = 0) {
 		if($catUid) {
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$enableFields = TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_dam_cat') . TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_dam_cat');
+			} else {
+				$enableFields = t3lib_befunc::BEenableFields('tx_dam_cat') .  t3lib_befunc::deleteClause('tx_dam_cat');
+			}
+
 			$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow(
 				'GROUP_CONCAT(uid) AS categoryUids',
 				'tx_dam_cat',
-				'parent_id = ' . intval($catUid) .
-				t3lib_befunc::BEenableFields('tx_dam_cat') .
-				t3lib_befunc::deleteClause('tx_dam_cat'),
+				'parent_id = ' . intval($catUid) . $enableFields,
 				'', '', ''
 			);
 
 			// add categories to list
 			$listOfCategories = $row['categoryUids'];
 
-			$categories = t3lib_div::trimExplode(',', $row['categoryUids']);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$categories = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $row['categoryUids']);
+			} else {
+				$categories = t3lib_div::trimExplode(',', $row['categoryUids']);
+			}
+
 			if(is_array($categories) && count($categories)) {
 				foreach($categories as $category) {
 					// only if further categories are found, add them to list
 					$tempCatList = $this->getRecursiveDAMCategories($category, $depth + 1);
-					if(count(t3lib_div::trimExplode(',', $tempCatList, true))) {
+
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$addCategory = count(TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $tempCatList, true));
+					} else {
+						$addCategory = count(t3lib_div::trimExplode(',', $tempCatList, true));
+					}
+
+					if ($addCategory) {
 						$listOfCategories .= ',' . $tempCatList;
 					}
 				}

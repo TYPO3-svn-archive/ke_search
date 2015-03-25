@@ -81,7 +81,11 @@ class tx_kesearch_filters {
 		// hook to modify filters
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFilters'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFilters'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyFilters($this->filters, $this);
 			}
 		}
@@ -120,7 +124,12 @@ class tx_kesearch_filters {
 			if ($this->pObj->piVars['filter'][$filter['uid']] == $option['tag']) {
 				$selected = true;
 			} else if (is_array($this->pObj->piVars['filter'][$filter['uid']])) {
-				if(t3lib_div::inArray($this->pObj->piVars['filter'][$filter['uid']], $option['tag'])) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$isInArray = TYPO3\CMS\Core\Utility\GeneralUtility::inArray($this->pObj->piVars['filter'][$filter['uid']], $option['tag']);
+				} else {
+					$isInArray = t3lib_div::inArray($this->pObj->piVars['filter'][$filter['uid']], $option['tag']);
+				}
+				if($isInArray) {
 					$selected = true;
 				}
 			} else if (!isset($this->pObj->piVars['filter'][$filter['uid']]) && !is_array($this->pObj->piVars['filter'][$filter['uid']])) {
@@ -154,7 +163,12 @@ class tx_kesearch_filters {
 			$list1 .= ',';
 		}
 		$list1 .= $list2;
-		return t3lib_div::uniqueList($list1);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$returnValue = TYPO3\CMS\Core\Utility\GeneralUtility::uniqueList($list1);
+		} else {
+			$returnValue = t3lib_div::uniqueList($list1);
+		}
+		return $returnValue;
 	}
 
 	/**

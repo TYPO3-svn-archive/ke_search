@@ -89,8 +89,15 @@ class tx_kesearch_indexer_types_ttnews extends tx_kesearch_indexer_types {
 		}
 
 		$where = 'pid IN (' . implode(',', $indexPids) . ') ';
-		$where .= t3lib_befunc::BEenableFields($table);
-		$where .= t3lib_befunc::deleteClause($table);
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
+
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields, $table, $where);
 		$counter = 0;
 
@@ -99,23 +106,39 @@ class tx_kesearch_indexer_types_ttnews extends tx_kesearch_indexer_types {
 
 				// if mode equals 'choose categories for indexing' (2). 1 = All
 				if ($this->indexerConfig['index_news_category_mode'] == '2') {
+
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$enableFields = TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tt_news_cat') . TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tt_news_cat');
+					} else {
+						$enableFields = t3lib_befunc::BEenableFields('tt_news_cat') . t3lib_befunc::deleteClause('tt_news_cat');
+					}
+
 					$resCat = $GLOBALS['TYPO3_DB']->exec_SELECT_mm_query(
 						'tt_news_cat.uid', 'tt_news', 'tt_news_cat_mm', 'tt_news_cat', ' AND tt_news.uid = ' . $newsRecord['uid'] .
-						t3lib_befunc::BEenableFields('tt_news_cat') .
-						t3lib_befunc::deleteClause('tt_news_cat'), '', '', ''
+						$enableFields,
+						'', '', ''
 					);
 
 					if ($GLOBALS['TYPO3_DB']->sql_num_rows($resCat)) {
 						$isInList = false;
 						while ($newsCat = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($resCat)) {
+
 							// if category was found in list, set isInList to true and break further processing.
-							if (t3lib_div::inList($this->indexerConfig['index_news_category_selection'], $newsCat['uid'])) {
-								$isInList = true;
-								break;
+							if (TYPO3_VERSION_INTEGER >= 7000000) {
+								if (TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->indexerConfig['index_news_category_selection'], $newsCat['uid'])) {
+									$isInList = true;
+									break;
+								}
+							} else {
+								if (t3lib_div::inList($this->indexerConfig['index_news_category_selection'], $newsCat['uid'])) {
+									$isInList = true;
+									break;
+								}
 							}
+
 						}
 
-						// if category was not fount stop further processing and loop with next news record
+						// if category was not found stop further processing and loop with next news record
 						if (!$isInList) {
 							continue;
 						}
@@ -176,7 +199,11 @@ class tx_kesearch_indexer_types_ttnews extends tx_kesearch_indexer_types {
 				// hook for custom modifications of the indexed data, e. g. the tags
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyNewsIndexEntry'])) {
 					foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyNewsIndexEntry'] as $_classRef) {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+						} else {
+							$_procObj = & t3lib_div::getUserObj($_classRef);
+						}
 						$_procObj->modifyNewsIndexEntry(
 							$title, $abstract, $fullContent, $params, $tags, $newsRecord, $additionalFields, $indexerConfig
 						);
@@ -232,7 +259,12 @@ class tx_kesearch_indexer_types_ttnews extends tx_kesearch_indexer_types {
 		// TODO: take Storage PID into account (in tx_ttnws class the
 		// where clause is stored in $this->SPaddWhere)
 		$addWhere = ' AND tt_news_cat.deleted=0';
-		$addWhere .= $getAll ? '' : t3lib_befunc::BEenableFields('tt_news_cat');
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$addWhere .= $getAll ? '' : TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tt_news_cat');
+		} else {
+			$addWhere .= $getAll ? '' : t3lib_befunc::BEenableFields('tt_news_cat');
+		}
 
 		// TODO: take tt_news configuration options useSPidFromCategory and
 		// and useSPidFromCategoryRecusive into account (would need an instance
@@ -271,7 +303,12 @@ class tx_kesearch_indexer_types_ttnews extends tx_kesearch_indexer_types {
 	 * @return int first found single view pid
 	 */
 	function getRecursiveCategorySinglePid($currentCategory) {
-		$addWhere = ' AND tt_news_cat.deleted=0' . t3lib_befunc::BEenableFields('tt_news_cat');
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$addWhere = ' AND tt_news_cat.deleted=0' . TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tt_news_cat');
+		} else {
+			$addWhere = ' AND tt_news_cat.deleted=0' . t3lib_befunc::BEenableFields('tt_news_cat');
+		}
+
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery('uid,parent_category,single_pid', 'tt_news_cat', 'tt_news_cat.uid=' . $currentCategory . $addWhere);
 		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		$GLOBALS['TYPO3_DB']->sql_free_result($res);

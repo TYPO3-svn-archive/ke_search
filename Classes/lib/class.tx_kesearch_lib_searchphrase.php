@@ -77,7 +77,6 @@ class tx_kesearch_lib_searchphrase {
 			'scoreAgainst' => implode(' ', $cleanSearchStringParts) // f.e. hello karl heinz mueller
 		);
 
-		//t3lib_utility_Debug::debug($searchArray, 'searchArray');die("Ende");
 		return $searchArray;
 	}
 
@@ -121,7 +120,12 @@ class tx_kesearch_lib_searchphrase {
 				$word = trim($word, '+-~<>');
 
 				// check for word length
-				if(t3lib_cs::utf8_strlen($word) < $this->pObj->extConf['searchWordLength']) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$searchWordLength = \TYPO3\CMS\Core\Charset\CharsetConverter::utf8_strlen($word);
+				} else {
+					$searchWordLength = t3lib_cs::utf8_strlen($word);
+				}
+				if($searchWordLength < $this->pObj->extConf['searchWordLength']) {
 					$this->pObj->hasTooShortWords = true;
 					$this->showShortMessage = true;
 					unset($searchParts[$key]);
@@ -222,7 +226,11 @@ class tx_kesearch_lib_searchphrase {
 		// hook for modifiying the tags to filter for
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyTagsAgainst'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyTagsAgainst'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyTagsAgainst($tagsAgainst, $this);
 			}
 		}

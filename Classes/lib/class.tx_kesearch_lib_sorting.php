@@ -88,7 +88,11 @@ class tx_kesearch_lib_sorting {
 		$this->subpartArray['###SORT_LINK###'] = $this->cObj->getSubpart($this->subpartArray['###ORDERNAVIGATION###'], '###SORT_LINK###');
 
 		// get sorting values (sortdate, title, what ever...)
-		$this->sortBy = t3lib_div::trimExplode(',', $this->conf['sortByVisitor'], true);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->sortBy = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->conf['sortByVisitor'], true);
+		} else {
+			$this->sortBy = t3lib_div::trimExplode(',', $this->conf['sortByVisitor'], true);
+		}
 	}
 
 
@@ -109,7 +113,11 @@ class tx_kesearch_lib_sorting {
 				// we can't sort by score if there is no sword given
 				if($this->pObj->sword != '' || $field != 'score') {
 					$sortByDir = $this->getDefaultSortingDirection($field);
-					$dbOrdering = t3lib_div::trimExplode(' ', $this->db->getOrdering());
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$dbOrdering = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(' ', $this->db->getOrdering());
+					} else {
+						$dbOrdering = t3lib_div::trimExplode(' ', $this->db->getOrdering());
+					}
 
 					/* if ordering direction is the same change it
 					 *
@@ -177,7 +185,12 @@ class tx_kesearch_lib_sorting {
 	public function changeOrdering($direction) {
 		$allowedDirections = array('asc', 'desc');
 		$direction = strtolower($direction);
-		if(!empty($direction) && t3lib_div::inArray($allowedDirections, $direction)) {
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$isInArray = TYPO3\CMS\Core\Utility\GeneralUtility::inArray($allowedDirections, $direction);
+		} else {
+			$isInArray = t3lib_div::inArray($allowedDirections, $direction);
+		}
+		if(!empty($direction) && $isInArray) {
 			if($direction == 'asc') {
 				$direction = 'desc';
 			} else $direction = 'asc';

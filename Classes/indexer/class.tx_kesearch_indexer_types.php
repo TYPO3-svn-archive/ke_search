@@ -62,7 +62,9 @@ class tx_kesearch_indexer_types {
 		$this->startMicrotime = microtime(true);
 		$this->pObj = $pObj;
 		$this->indexerConfig = $this->pObj->indexerConfig;
-		if (TYPO3_VERSION_INTEGER >= 6002000) {
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->queryGen = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Database\\QueryGenerator');
+		} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 			$this->queryGen = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_queryGenerator');
 		} else {
 			$this->queryGen = t3lib_div::makeInstance('t3lib_queryGenerator');
@@ -80,8 +82,14 @@ class tx_kesearch_indexer_types {
 	 */
 	public function getPagelist($startingPointsRecursive = '', $singlePages = '') {
 		// make array from list
-		$pidsRecursive = t3lib_div::trimExplode(',', $startingPointsRecursive, true);
-		$pidsNonRecursive = t3lib_div::trimExplode(',', $singlePages, true);
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$pidsRecursive = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $startingPointsRecursive, true);
+			$pidsNonRecursive = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $singlePages, true);
+		} else {
+			$pidsRecursive = t3lib_div::trimExplode(',', $startingPointsRecursive, true);
+			$pidsNonRecursive = t3lib_div::trimExplode(',', $singlePages, true);
+		}
 
 		// add recursive pids
 		foreach($pidsRecursive as $pid) {
@@ -92,7 +100,15 @@ class tx_kesearch_indexer_types {
 		foreach($pidsNonRecursive as $pid) {
 			$pageList .= $pid . ',';
 		}
-		return t3lib_div::trimExplode(',', $pageList, true);
+
+		// convert to array
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$pageUidArray = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $pageList, true);
+		} else {
+			$pageUidArray = t3lib_div::trimExplode(',', $pageList, true);
+		}
+
+		return $pageUidArray;
 	}
 
 
@@ -140,8 +156,13 @@ class tx_kesearch_indexer_types {
 
 		// add complete page record to list of pids in $indexPids
 		$where = ' AND ' . $table . '.pid = pages.uid ';
-		$where .= t3lib_befunc::BEenableFields($table);
-		$where .= t3lib_befunc::deleteClause($table);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
 		$this->pageRecords = $this->getPageRecords($indexPids, $where, 'pages,' . $table, 'pages.*' );
 		if(count($this->pageRecords)) {
 			// create a new list of allowed pids
@@ -159,14 +180,20 @@ class tx_kesearch_indexer_types {
 	 */
 	public function addTagsToRecords($uids, $pageWhere = '1=1') {
 		$tagChar = $this->pObj->extConf['prePostTagChar'];
+
 		// add tags which are defined by page properties
 		$fields = 'pages.*, GROUP_CONCAT(CONCAT("' . $tagChar . '", tx_kesearch_filteroptions.tag, "' . $tagChar . '")) as tags';
 		$table = 'pages, tx_kesearch_filteroptions';
 		$where = 'pages.uid IN (' . implode(',', $uids) . ')';
 		$where .= ' AND pages.tx_kesearch_tags <> "" ';
 		$where .= ' AND FIND_IN_SET(tx_kesearch_filteroptions.uid, pages.tx_kesearch_tags)';
-		$where .= t3lib_befunc::BEenableFields('tx_kesearch_filteroptions');
-		$where .= t3lib_befunc::deleteClause('tx_kesearch_filteroptions');
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_kesearch_filteroptions');
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_kesearch_filteroptions');
+		} else {
+			$where .= t3lib_befunc::BEenableFields('tx_kesearch_filteroptions');
+			$where .= t3lib_befunc::deleteClause('tx_kesearch_filteroptions');
+		}
 
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields, $table, $where, 'pages.uid', '', '');
 		while($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -177,8 +204,13 @@ class tx_kesearch_indexer_types {
 		$fields = 'automated_tagging, automated_tagging_exclude, tag';
 		$table = 'tx_kesearch_filteroptions';
 		$where = 'automated_tagging <> "" ';
-		$where .= t3lib_befunc::BEenableFields('tx_kesearch_filteroptions');
-		$where .= t3lib_befunc::deleteClause('tx_kesearch_filteroptions');
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_kesearch_filteroptions');
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_kesearch_filteroptions');
+		} else {
+			$where .= t3lib_befunc::BEenableFields('tx_kesearch_filteroptions');
+			$where .= t3lib_befunc::deleteClause('tx_kesearch_filteroptions');
+		}
 
 		$rows = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows($fields, $table, $where);
 
@@ -186,10 +218,19 @@ class tx_kesearch_indexer_types {
 
 		foreach($rows as $row) {
 			$tempTags = array();
+
 			if ( $row['automated_tagging_exclude'] > '' ) {
 				$whereRow = $where . 'AND FIND_IN_SET(pages.pid, "' . $row['automated_tagging_exclude'] .'") = 0';
-			} else $whereRow = $where;
-			$pageList = t3lib_div::trimExplode(',', $this->queryGen->getTreeList($row['automated_tagging'], 99, 0, $whereRow));
+			} else {
+				$whereRow = $where;
+			}
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$pageList = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->queryGen->getTreeList($row['automated_tagging'], 99, 0, $whereRow));
+			} else {
+				$pageList = t3lib_div::trimExplode(',', $this->queryGen->getTreeList($row['automated_tagging'], 99, 0, $whereRow));
+			}
+
 			foreach($pageList as $uid) {
 				if($this->pageRecords[$uid]['tags']) {
 					$this->pageRecords[$uid]['tags'] .= ',' . $tagChar . $row['tag'] . $tagChar;
@@ -274,11 +315,16 @@ class tx_kesearch_indexer_types {
 		$fields = 'title,tag';
 		$table = 'tx_kesearch_filteroptions';
 		$where = 'uid="'.intval($tagUid).'" ';
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='1');
 		$anz = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
-		$row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
+		$row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 
 		if ($clearText) {
 			return $row['title'];

@@ -51,8 +51,13 @@ class user_filterlist {
 		$fields = '*';
 		$table = 'tx_kesearch_filters';
 		$where = 'pid IN('.$intString.') ';
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		if (TYPO3_VERSION_INTEGER > 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table,$inv=0);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table,$inv=0);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table,$inv=0);
+			$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		}
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='');
 		$anz = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
 		while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -71,7 +76,11 @@ class user_filterlist {
 		}
 
 		// get the page TSconfig
-        $this->pageTSconfig=t3lib_BEfunc::GetPagesTSconfig($currentPid);
+		if (TYPO3_VERSION_INTEGER > 7000000) {
+			$this->pageTSconfig=\TYPO3\CMS\Backend\Utility\BackendUtility::GetPagesTSconfig($currentPid);
+		} else {
+			$this->pageTSconfig=t3lib_BEfunc::GetPagesTSconfig($currentPid);
+		}
         $this->modTSconfig=$this->pageTSconfig['ke_search.'];
 
 		// get filters
@@ -87,9 +96,14 @@ class user_filterlist {
 			$where = '1=1 ';
 		}
 
+		if (TYPO3_VERSION_INTEGER > 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table,$inv=0);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table,$inv=0);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table,$inv=0);
+			$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		}
 
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='');
 		$anz = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
 		while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
@@ -98,8 +112,14 @@ class user_filterlist {
 				$fields2 = '*';
 				$table2 = 'tx_kesearch_filteroptions';
 				$where2 = 'uid in ('.$row['options'].')';
-				$where2 .= t3lib_befunc::BEenableFields($table2);
-				$where2 .= t3lib_befunc::deleteClause($table2);
+				if (TYPO3_VERSION_INTEGER > 7000000) {
+					$where2 .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table2);
+					$where2 .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table2);
+				} else {
+					$where2 .= t3lib_befunc::BEenableFields($table2);
+					$where2 .= t3lib_befunc::deleteClause($table2);
+				}
+
 				$res2 = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields2,$table2,$where2);
 				while($row2 = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($res2)) {
 					$config['items'][] = array($row['title'].': '.$row2['title'], $row2['uid']);
@@ -128,8 +148,15 @@ class user_filterlist {
 		$fields = '*';
 		$table = 'tx_kesearch_filters';
 		$where = 'pid IN('.$intString.') ';
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
+
+		if (TYPO3_VERSION_INTEGER > 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table,$inv=0);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table,$inv=0);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table,$inv=0);
+			$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		}
+
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='');
 		while ($rowFilter=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 
@@ -138,8 +165,15 @@ class user_filterlist {
 				$fieldsOpts = '*';
 				$tableOpts = 'tx_kesearch_filteroptions';
 				$whereOpts = 'uid in ('.$rowFilter['options'].')';
-				$whereOpts .= t3lib_befunc::BEenableFields($tableOpts,$inv=0);
-				$whereOpts .= t3lib_befunc::deleteClause($tableOpts,$inv=0);
+
+				if (TYPO3_VERSION_INTEGER > 7000000) {
+					$whereOpts .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($tableOpts,$inv=0);
+					$whereOpts .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($tableOpts,$inv=0);
+				} else {
+					$whereOpts .= t3lib_befunc::BEenableFields($tableOpts,$inv=0);
+					$whereOpts .= t3lib_befunc::deleteClause($tableOpts,$inv=0);
+				}
+
 				$resOpts = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fieldsOpts,$tableOpts,$whereOpts,$groupBy='',$orderBy='',$limit='');
 				while ($rowOpts=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($resOpts)) {
 					$config['items'][] = array($rowFilter['title'].': '.$rowOpts['title'], $rowOpts['uid']);

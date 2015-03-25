@@ -87,7 +87,12 @@ class tx_kesearch_indexer_types_ke_yac extends tx_kesearch_indexer_types {
 				$targetPID = $this->indexerConfig['targetpid'];
 
 				// get tags
-				$yacRecordTags = t3lib_div::trimExplode(',',$yacRecord['tx_keyacsearchtags_tags'], true);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$yacRecordTags = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',',$yacRecord['tx_keyacsearchtags_tags'], true);
+				} else {
+					$yacRecordTags = t3lib_div::trimExplode(',',$yacRecord['tx_keyacsearchtags_tags'], true);
+				}
+
 				$tags = '';
 				$clearTextTags = '';
 				if (count($yacRecordTags)) {
@@ -108,7 +113,11 @@ class tx_kesearch_indexer_types_ke_yac extends tx_kesearch_indexer_types {
 					// hook for custom modifications of the indexed data, e. g. the tags
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyYACIndexEntry'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyYACIndexEntry'] as $_classRef) {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+						} else {
+							$_procObj = & t3lib_div::getUserObj($_classRef);
+						}
 						$_procObj->modifyYACIndexEntry(
 							$title,
 							$abstract,

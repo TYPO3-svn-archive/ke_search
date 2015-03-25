@@ -434,6 +434,16 @@
 						</TCEforms>
 					</showPageImages>
 
+					<showNewsImages>
+						<TCEforms>
+							<label>LLL:EXT:ke_search/pi1/locallang.xml:ff.showNewsImages</label>
+							<config>
+								<type>check</type>
+								<default>1</default>
+							</config>
+						</TCEforms>
+					</showNewsImages>
+
 					<showTypeIcon>
 						<TCEforms>
 							<label>LLL:EXT:ke_search/pi1/locallang.xml:ff.showTypeIcon</label>

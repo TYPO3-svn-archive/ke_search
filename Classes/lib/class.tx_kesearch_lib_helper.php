@@ -107,6 +107,11 @@ class tx_kesearch_helper {
 		);
 
 		if ($uid && $table) {
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$enableFields = \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('sys_category') . \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('sys_category');
+			} else {
+				$enableFields = t3lib_befunc::BEenableFields('sys_category') . t3lib_befunc::deleteClause('sys_category');
+			}
 			$resCat = $GLOBALS['TYPO3_DB']->exec_SELECT_mm_query(
 				'sys_category.uid, sys_category.title',
 				'sys_category',
@@ -114,8 +119,7 @@ class tx_kesearch_helper {
 				$table,
 				' AND ' . $table . '.uid = ' . $uid .
 				' AND sys_category_record_mm.tablenames = "' . $table . '"' .
-				t3lib_befunc::BEenableFields('sys_category') .
-				t3lib_befunc::deleteClause('sys_category'),
+				$enableFields,
 				'',
 				'sys_category_record_mm.sorting'
 			);

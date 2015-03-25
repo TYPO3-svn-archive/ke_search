@@ -65,8 +65,14 @@ class tx_kesearch_indexer_types_mmforum extends tx_kesearch_indexer_types {
 
 		$table = 'tx_mmforum_forums';
 		$where = 'tx_mmforum_forums.pid IN (' . implode(',', $indexPids) . ') ';
-		$where .= t3lib_BEfunc::BEenableFields('tx_mmforum_forums');
-		$where .= t3lib_BEfunc::deleteClause('tx_mmforum_forums');
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_mmforum_forums');
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_mmforum_forums');
+		} else {
+			$where .= t3lib_BEfunc::BEenableFields('tx_mmforum_forums');
+			$where .= t3lib_BEfunc::deleteClause('tx_mmforum_forums');
+		}
 
 		// Select forums
 		$forumRecords = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
@@ -107,8 +113,13 @@ class tx_kesearch_indexer_types_mmforum extends tx_kesearch_indexer_types {
 
 			$table  = 'tx_mmforum_topics';
 			$where  = 'tx_mmforum_topics.forum_id = ' . $forumRecord['uid'] . ' ';
-			$where .= t3lib_BEfunc::BEenableFields('tx_mmforum_topics');
-			$where .= t3lib_BEfunc::deleteClause('tx_mmforum_topics');
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$where .= TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_mmforum_topics');
+				$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_mmforum_topics');
+			} else {
+				$where .= t3lib_BEfunc::BEenableFields('tx_mmforum_topics');
+				$where .= t3lib_BEfunc::deleteClause('tx_mmforum_topics');
+			}
 
 			// Select topics
 			$resTopic = $GLOBALS['TYPO3_DB']->exec_SELECTquery(
@@ -131,8 +142,15 @@ class tx_kesearch_indexer_types_mmforum extends tx_kesearch_indexer_types {
 					$where  = 'tx_mmforum_posts_text.post_id = tx_mmforum_posts.uid ';
 					$where .= 'AND tx_mmforum_posts.topic_id = ' . $topicRecord[ 'uid' ] . ' ';
 					$where .= 'AND tx_mmforum_posts.forum_id = ' . $forumRecord[ 'uid' ] . ' ';
-					$where .= t3lib_BEfunc::deleteClause('tx_mmforum_posts_text');
-					$where .= t3lib_BEfunc::deleteClause('tx_mmforum_posts');
+
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_mmforum_posts_text');
+						$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_mmforum_posts');
+					} else {
+						$where .= t3lib_BEfunc::deleteClause('tx_mmforum_posts_text');
+						$where .= t3lib_BEfunc::deleteClause('tx_mmforum_posts');
+					}
+
 					$groupBy = '';
 					$orderBy = '';
 					$limit = '';
@@ -192,7 +210,11 @@ class tx_kesearch_indexer_types_mmforum extends tx_kesearch_indexer_types {
 						// hook for custom modifications of the indexed data, e. g. the tags
 					if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyMMForumIndexEntry'])) {
 						foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyMMForumIndexEntry'] as $_classRef) {
-							$_procObj = & t3lib_div::getUserObj($_classRef);
+							if (TYPO3_VERSION_INTEGER >= 7000000) {
+								$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+							} else {
+								$_procObj = & t3lib_div::getUserObj($_classRef);
+							}
 							$_procObj->modifyMMForumIndexEntry(
 								$title,
 								$abstract,

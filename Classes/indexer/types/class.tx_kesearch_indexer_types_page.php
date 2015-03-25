@@ -152,7 +152,12 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		$this->whereClauseForCType = implode(' OR ', $cTypes);
 
 		// get all available sys_language_uid records
-		$this->sysLanguages = t3lib_BEfunc::getSystemLanguages();
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->sysLanguages = \TYPO3\CMS\Backend\Utility\BackendUtility::getSystemLanguages();
+		} else {
+			$this->sysLanguages = t3lib_BEfunc::getSystemLanguages();
+		}
 
 		// make file repository instance only if TYPO3 version is >= 6.0
 		if (TYPO3_VERSION_INTEGER >= 6000000) {
@@ -247,13 +252,18 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		// create entry in cachedPageRecods for additional languages, skip default language 0
 		foreach ($this->sysLanguages as $sysLang) {
 			if ($sysLang[1] > 0) {
-				list($pageOverlay) = t3lib_BEfunc::getRecordsByField(
-						'pages_language_overlay', 'pid', $pageRow['uid'], 'AND sys_language_uid=' . intval($sysLang[1])
-				);
+
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					list($pageOverlay) = \TYPO3\CMS\Backend\Utility\BackendUtility::getRecordsByField('pages_language_overlay', 'pid', $pageRow['uid'], 'AND sys_language_uid=' . intval($sysLang[1]));
+				} else {
+					list($pageOverlay) = t3lib_BEfunc::getRecordsByField('pages_language_overlay', 'pid', $pageRow['uid'], 'AND sys_language_uid=' . intval($sysLang[1]));
+				}
 				if ($pageOverlay) {
-					$this->cachedPageRecords[$sysLang[1]][$pageRow['uid']] = t3lib_div::array_merge(
-							$pageRow, $pageOverlay
-					);
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$this->cachedPageRecords[$sysLang[1]][$pageRow['uid']] = \TYPO3\CMS\Core\Utility\GeneralUtility::array_merge($pageRow, $pageOverlay);
+					} else {
+						$this->cachedPageRecords[$sysLang[1]][$pageRow['uid']] = t3lib_div::array_merge($pageRow, $pageOverlay);
+					}
 				}
 			}
 		}
@@ -345,14 +355,23 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		$table = 'tt_content';
 		$where = 'pid = ' . intval($uid);
 		$where .= ' AND (' . $this->whereClauseForCType . ')';
-		$where .= t3lib_BEfunc::BEenableFields($table);
-		$where .= t3lib_BEfunc::deleteClause($table);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_BEfunc::BEenableFields($table);
+			$where .= t3lib_BEfunc::deleteClause($table);
+		}
 
 		// Get frontend groups for this page, this group applies to all
 		// content elements of this pages. Individuel frontent groups
 		// set for the content elements will be ignored. Use the content
 		// element indexer if you need that feature!
-		$feGroupsPages = t3lib_div::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$feGroupsPages = \TYPO3\CMS\Core\Utility\GeneralUtility::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		} else {
+			$feGroupsPages = t3lib_div::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		}
 
 		// get Tags for current page
 		$tags = $this->pageRecords[intval($uid)]['tags'];
@@ -415,7 +434,11 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		// hook for custom modifications of the indexed data, e. g. the tags
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyPagesIndexEntry'])) {
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyPagesIndexEntry'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyPagesIndexEntry(
 					$uid, $pageContent, $tags, $this->cachedPageRecords, $additionalFields, $indexerConfig, $indexEntryDefaultValues
 				);
@@ -515,8 +538,13 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		}
 
 		if ($feGroupsPages && $feGroupsContentElement && $feGroupsPages != '-1' && $feGroupsContentElement != '-1') {
-			$feGroupsContentElementArray = t3lib_div::intExplode(',', $feGroupsContentElement);
-			$feGroupsPagesArray = t3lib_div::intExplode(',', $feGroupsPages);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$feGroupsContentElementArray = \TYPO3\CMS\Core\Utility\GeneralUtility::intExplode(',', $feGroupsContentElement);
+				$feGroupsPagesArray = \TYPO3\CMS\Core\Utility\GeneralUtility::intExplode(',', $feGroupsPages);
+			} else {
+				$feGroupsContentElementArray = t3lib_div::intExplode(',', $feGroupsContentElement);
+				$feGroupsPagesArray = t3lib_div::intExplode(',', $feGroupsPages);
+			}
 			$feGroups = implode(',', array_intersect($feGroupsContentElementArray,$feGroupsContentElementArray));
 		}
 
@@ -552,9 +580,15 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 			// loop through files
 			foreach ($fileObjects as $fileObject) {
 
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$isInList = \TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->indexerConfig['fileext'], $fileObject->getExtension());
+				} else {
+					$isInList = t3lib_div::inList($this->indexerConfig['fileext'], $fileObject->getExtension());
+				}
+
 				// check if the file extension fits in the list of extensions
 				// to index defined in the indexer configuration
-				if (t3lib_div::inList($this->indexerConfig['fileext'], $fileObject->getExtension())) {
+				if ($isInList) {
 
 					// get file path and URI
 					$fileUri = $fileObject->getStorage()->getPublicUrl($fileObject);
@@ -713,7 +747,11 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		//hook for custom modifications of the indexed data, e. g. the tags
 		if(is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFileIndexEntryFromContentIndexer'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFileIndexEntryFromContentIndexer'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyFileIndexEntryFromContentIndexer($fileObject, $content, $fileIndexerObject, $feGroups, $ttContentRow, $storagePid, $title, $tags, $abstract, $additionalFields);
 			}
 		}

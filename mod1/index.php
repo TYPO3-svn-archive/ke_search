@@ -44,7 +44,14 @@ $BE_USER->modAccess($MCONF,1);	// This checks permissions and exits if the users
  * @package	TYPO3
  * @subpackage	tx_kesearch
  */
-class  tx_kesearch_module1 extends t3lib_SCbase {
+
+if (TYPO3_VERSION_INTEGER >= 7000000) {
+	class tx_kesearch_module_baseclass extends \TYPO3\CMS\Backend\Module\BaseScriptClass { }
+} else {
+	class tx_kesearch_module_baseclass extends t3lib_SCbase { }
+}
+
+class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	var $pageinfo;
 	var $registry;
 
@@ -86,13 +93,19 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 
 		// Access check!
 		// The page will show only if there is a valid page and if this page may be viewed by the user
-		$this->pageinfo = t3lib_BEfunc::readPageAccess($this->id,$this->perms_clause);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->pageinfo = \TYPO3\CMS\Backend\Utility\BackendUtility::readPageAccess($this->id,$this->perms_clause);
+		} else {
+			$this->pageinfo = t3lib_BEfunc::readPageAccess($this->id,$this->perms_clause);
+		}
 		$access = is_array($this->pageinfo) ? 1 : 0;
 
 		if (($this->id && $access) || ($GLOBALS['BE_USER']->user['admin'] && !$this->id))	{
 
 				// Draw the header.
-			if (TYPO3_VERSION_INTEGER >= 6002000) {
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Backend\\Template\\DocumentTemplate');
+			} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 				$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('mediumDoc');
 			} else {
 				$this->doc = t3lib_div::makeInstance('mediumDoc');
@@ -297,7 +310,12 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 			';
 
 			$this->content .= '<div id="typo3-docheader"><div class="typo3-docheader-functions">';
-			$this->content .= t3lib_BEfunc::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']);
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$this->content .= \TYPO3\CMS\Backend\Utility\BackendUtility::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']);
+			} else {
+				$this->content .= t3lib_BEfunc::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']);
+			}
 			$this->content .= '</div></div>';
 			$this->content .= '<div id="typo3-docbody"><div id="typo3-inner-docbody">';
 			$this->content .= $this->doc->startPage($GLOBALS['LANG']->getLL('title'));
@@ -348,18 +366,27 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 
 		$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ke_search']);
 
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$do = TYPO3\CMS\Core\Utility\GeneralUtility::_GET('do');
+		} else {
+			$do = t3lib_div::_GET('do');
+		}
+
 		switch((string)$this->MOD_SETTINGS['function'])	{
 
 			// start indexing process
 			case 1:
 				$content = '';
-				if (TYPO3_VERSION_INTEGER >= 6002000) {
+
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Registry');
+				} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 					$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_Registry');
 				} else {
 					$this->registry = t3lib_div::makeInstance('t3lib_Registry');
 				}
 
-				if (t3lib_div::_GET('do') == 'startindexer') {
+				if ($do == 'startindexer') {
 					// make indexer instance and init
 					if (TYPO3_VERSION_INTEGER >= 6002000) {
 						$indexer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('tx_kesearch_indexer');
@@ -368,7 +395,7 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 					}
 					$cleanup = $this->extConf['cleanupInterval'];
 					$content .= $indexer->startIndexing(true, $this->extConf); // start indexing in verbose mode with cleanup process
-				} else if (t3lib_div::_GET('do') == 'rmLock') {
+				} else if ($do == 'rmLock') {
 					// remove lock from registry - admin only!
 					if ($GLOBALS['BE_USER']->user['admin']) {
 						$this->registry->removeAllByNamespace('tx_kesearch');
@@ -429,7 +456,7 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 			case 2:
 				if ($this->id) {
 
-					if (t3lib_div::_GET('do') == 'reindex') {
+					if ($do == 'reindex') {
 						if (TYPO3_VERSION_INTEGER >= 6002000) {
 							$indexer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('tx_kesearch_indexer');
 						} else {
@@ -441,7 +468,11 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 
 					// page is selected: get indexed content
 					$content = '<h2>Index content for page '.$this->id.'</h2>';
-					$content .= $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_core.xml:labels.path').': '.t3lib_div::fixed_lgd_cs($this->pageinfo['_thePath'],-50);
+					if (TYPO3_VERSION_INTEGER > 7000000) {
+						$content .= $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_core.xml:labels.path').': '.  TYPO3\CMS\Core\Utility\GeneralUtility::fixed_lgd_cs($this->pageinfo['_thePath'],-50);
+					} else {
+						$content .= $GLOBALS['LANG']->sL('LLL:EXT:lang/locallang_core.xml:labels.path').': '.t3lib_div::fixed_lgd_cs($this->pageinfo['_thePath'],-50);
+					}
 					$content .= $this->getIndexedContent($this->id);
 				} else {
 					// no page selected: show message
@@ -478,7 +509,7 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 				if ($GLOBALS['BE_USER']->user['admin'])	{
 					$table = 'tx_kesearch_index';
 
-					if (t3lib_div::_GET('do') == 'clear') {
+					if ($do == 'clear') {
 						$query = 'TRUNCATE TABLE ' . $table;
 						$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 					}
@@ -575,11 +606,17 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 		$table = 'tx_kesearch_index';
 		$where = '(type="page" AND targetpid="'.intval($pageUid).'")  ';
 		$where .= 'OR (type<>"page" AND pid="'.intval($pageUid).'")  ';
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table,$inv=0);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table,$inv=0);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table,$inv=0);
+			$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		}
+
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='');
-		// t3lib_div::debug($GLOBALS['TYPO3_DB']->SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit=''),1);
-		// $anz = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
+
 		while ($row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res)) {
 
 			// build type image path
@@ -593,9 +630,7 @@ class  tx_kesearch_module1 extends t3lib_SCbase {
 				default:
 					$imagePath = t3lib_extMgm::extRelPath('ke_search').'res/img/types_backend/selicon_tx_kesearch_indexerconfig_type_2.gif';
 					break;
-
 			}
-
 
 			// build tag table
 			$tagTable = '<div class="tags" >';

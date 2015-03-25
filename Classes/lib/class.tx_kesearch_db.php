@@ -22,6 +22,12 @@
 *  This copyright notice MUST APPEAR in all copies of the script!
 ***************************************************************/
 
+if (TYPO3_VERSION_INTEGER >= 7000000) {
+	class tx_kesearch_db_baseclass implements \TYPO3\CMS\Core\SingletonInterface { }
+} else {
+	class tx_kesearch_db_baseclass implements t3lib_Singleton { }
+}
+
 /**
  * DB Class for ke_search, generates search queries.
  *
@@ -29,7 +35,7 @@
  * @package	TYPO3
  * @subpackage	tx_kesearch
  */
-class tx_kesearch_db implements t3lib_Singleton {
+class tx_kesearch_db extends tx_kesearch_db_baseclass {
 	var $conf = array();
 	var $bestIndex = '';
 	var $countResultsOfTags = 0;
@@ -93,7 +99,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 				$queryParts['ORDERBY'],
 				$queryParts['LIMIT']
 			);
-			t3lib_div::devLog('Search result query', $this->pObj->extKey, 0, array($query));
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				TYPO3\CMS\Core\Utility\GeneralUtility::devLog('Search result query', $this->pObj->extKey, 0, array($query));
+			} else {
+				t3lib_div::devLog('Search result query', $this->pObj->extKey, 0, array($query));
+			}
 		}
 
 		$this->searchResults = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows(
@@ -162,7 +172,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 		// add fe_groups to query
 		$queryForSphinx .= ' @fe_group _group_NULL | _group_0';
 		if(!empty($GLOBALS['TSFE']->gr_list)) {
-			$feGroups = t3lib_div::trimExplode(',', $GLOBALS['TSFE']->gr_list, 1);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$feGroups = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $GLOBALS['TSFE']->gr_list, 1);
+			} else {
+				$feGroups = t3lib_div::trimExplode(',', $GLOBALS['TSFE']->gr_list, 1);
+			}
 			foreach($feGroups as $key => $group) {
 				if (TYPO3_VERSION_INTEGER >= 6000000) {
 					$intval_positive_group = TYPO3\CMS\Core\Utility\MathUtility::convertToPositiveInteger($group);
@@ -177,7 +191,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 		}
 
 		// restrict to storage page (in MySQL: $where .= ' AND pid in (' .  . ') ';)
-		$startingPoints = t3lib_div::trimExplode(',', $this->pObj->startingPoints);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$startingPoints = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $this->pObj->startingPoints);
+		} else {
+			$startingPoints = t3lib_div::trimExplode(',', $this->pObj->startingPoints);
+		}
 		$queryForSphinx .= ' @pid ';
 		$first = true;
 		foreach ($startingPoints as $startingPoint) {
@@ -193,7 +211,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 		// hook for appending additional where clause to sphinx query
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['appendWhereToSphinx'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['appendWhereToSphinx'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$queryForSphinx = $_procObj->appendWhereToSphinx($queryForSphinx, $this->user_kesearchpremium, $this);
 			}
 		}
@@ -248,7 +270,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 		// hook for third party applications to manipulate last part of query building
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['getQueryParts'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['getQueryParts'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$queryParts = $_procObj->getQueryParts($queryParts, $this);
 			}
 		}
@@ -451,7 +477,12 @@ class tx_kesearch_db implements t3lib_Singleton {
 			$piVarsDir = $this->pObj->piVars['sortByDir'];
 			$piVarsDir = ($piVarsDir == '') ? 'asc' : $piVarsDir;
 			if(!empty($piVarsField)) { // if an ordering field is defined by GET/POST
-				if($this->conf['sortByVisitor'] != '' && t3lib_div::inList($this->conf['sortByVisitor'], $piVarsField)) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$isInList = TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->conf['sortByVisitor'], $piVarsField);
+				} else {
+					$isInList = t3lib_div::inList($this->conf['sortByVisitor'], $piVarsField);
+				}
+				if($this->conf['sortByVisitor'] != '' && $isInList) {
 					$orderBy = $piVarsField . ' ' . $piVarsDir;
 				} // if sortByVisitor is not set OR not in the list of allowed fields then use fallback ordering in "sortWithoutSearchword"
 			} // if sortByVisitor is not set OR not in the list of allowed fields then use fallback ordering in "sortWithoutSearchword"
@@ -481,7 +512,11 @@ class tx_kesearch_db implements t3lib_Singleton {
 		// hook for third party pagebrowsers or for modification $this->pObj->piVars['page'] parameter
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['getLimit'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['getLimit'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->getLimit($startLimit, $this);
 			}
 		}

@@ -47,7 +47,13 @@ class tx_kesearch_indexer_filetypes_xls extends tx_kesearch_indexer_types_file i
 		// check if path to xls2csv is correct
 		if ($this->extConf['pathCatdoc']) {
 			$pathCatdoc = rtrim($this->extConf['pathCatdoc'], '/') . '/';
-			$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
+			} else {
+				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+			}
+
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
 			if ($safeModeEnabled || (@is_file($pathCatdoc . 'xls2csv' . $exe))) {
 				$this->app['xls2csv'] = $pathCatdoc . 'xls2csv' . $exe;
@@ -72,19 +78,36 @@ class tx_kesearch_indexer_filetypes_xls extends tx_kesearch_indexer_types_file i
 	 */
 	public function getContent($file) {
 		// create the tempfile which will contain the content
-		$tempFileName = t3lib_div::tempnam('xmls_files-Indexer');
-		@unlink($tempFileName); // Delete if exists, just to be safe.
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$tempFileName = TYPO3\CMS\Core\Utility\GeneralUtility::tempnam('xls_files-Indexer');
+		} else {
+			$tempFileName = t3lib_div::tempnam('xls_files-Indexer');
+		}
+
+		// Delete if exists, just to be safe.
+		@unlink($tempFileName);
+
 		// generate and execute the pdftotext commandline tool
 		$cmd = $this->app['xls2csv'] . ' -c \' \' -q 0 -s8859-1 -dutf-8 ' . escapeshellarg($file) . ' > ' . $tempFileName;
-		t3lib_utility_Command::exec($cmd);
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			TYPO3\CMS\Core\Utility\CommandUtility::exec($cmd);
+		} else {
+			t3lib_utility_Command::exec($cmd);
+		}
 
 		// check if the tempFile was successfully created
 		if (@is_file($tempFileName)) {
-			$content = t3lib_div::getUrl($tempFileName);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$content = TYPO3\CMS\Core\Utility\GeneralUtility::getUrl($tempFileName);
+			} else {
+				$content = t3lib_div::getUrl($tempFileName);
+			}
 			unlink($tempFileName);
 		}
 		else
 			return false;
+
 		// check if content was found
 		if (strlen($content)) {
 			return $content;

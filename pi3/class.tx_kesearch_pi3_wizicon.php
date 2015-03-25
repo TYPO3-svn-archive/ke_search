@@ -3,7 +3,7 @@
 /* * *************************************************************
  *  Copyright notice
  *
- *  (c) 2011 Andreas Kiefer <kiefer@kiwebservices.de>
+ *  (c) 2011 Andreas Kiefer 
  *  All rights reserved
  *
  *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -26,7 +26,7 @@
 /**
  * Class that adds the wizard icon.
  *
- * @author	Andreas Kiefer <kiefer@kiwebservices.de>
+ * @author	Andreas Kiefer
  * @package	TYPO3
  * @subpackage	tx_kesearch
  */
@@ -60,8 +60,10 @@ class tx_kesearch_pi3_wizicon {
 	 */
 	function includeLocalLang() {
 		$llFile = t3lib_extMgm::extPath('ke_search') . 'pi3/locallang.xml';
-		if (t3lib_div::compat_version('4.6')) {
-			if (TYPO3_VERSION_INTEGER >= 6002000) {
+		if (TYPO3_VERSION_INTEGER >= 4006000) {
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$xmlParser = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Localization\\Parser\\LocallangXmlParser');
+			} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 				$xmlParser = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_l10n_parser_Llxml');
 			} else {
 				$xmlParser = t3lib_div::makeInstance('t3lib_l10n_parser_Llxml');

@@ -69,7 +69,13 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 		if ($this->extConf['pathPdftotext']) {
 			$pathPdftotext = rtrim($this->extConf['pathPdftotext'], '/') . '/';
 			$pathPdfinfo = rtrim($this->extConf['pathPdfinfo'], '/') . '/';
-			$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
+			} else {
+				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
+			}
+
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
 			if ($safeModeEnabled || (@is_file($pathPdftotext . 'pdftotext' . $exe) && @is_file($pathPdfinfo . 'pdfinfo' . $exe))) {
 				$this->app['pdfinfo'] = $pathPdfinfo . 'pdfinfo' . $exe;
@@ -94,7 +100,11 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 	 */
 	public function startIndexing() {
 		$directories = $this->indexerConfig['directories'];
-		$directoryArray = t3lib_div::trimExplode(',', $directories, true);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$directoryArray = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $directories, true);
+		} else {
+			$directoryArray = t3lib_div::trimExplode(',', $directories, true);
+		}
 
 		if ($this->pObj->indexerConfig['fal_storage'] > 0) {
 			/* @var $storageRepository TYPO3\CMS\Core\Resource\StorageRepository */
@@ -165,7 +175,11 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 		$directoryArray = $this->getAbsoluteDirectoryPath($directoryArray);
 		if (is_array($directoryArray) && count($directoryArray)) {
 			foreach ($directoryArray as $directory) {
-				$foundFiles = t3lib_div::getAllFilesAndFoldersInPath(array(), $directory, $this->indexerConfig['fileext']);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$foundFiles = TYPO3\CMS\Core\Utility\GeneralUtility::getAllFilesAndFoldersInPath(array(), $directory, $this->indexerConfig['fileext']);
+				} else {
+					$foundFiles = t3lib_div::getAllFilesAndFoldersInPath(array(), $directory, $this->indexerConfig['fileext']);
+				}
 				if (is_array($foundFiles) && count($foundFiles)) {
 					foreach ($foundFiles as $file) {
 						$files[] = $file;
@@ -261,7 +275,7 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 			} else {
 				// if no indexer for this type of file exists, we do a fallback:
 				// we return an empty content. Doing this at least the FAL metadata
-				// can be indexed. So this makes only sense if use FAL.
+				// can be indexed. So this makes only sense when using FAL.
 				if ($this->pObj->indexerConfig['fal_storage'] > 0) {
 					return '';
 				} else {
@@ -356,7 +370,11 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 		// hook for custom modifications of the indexed data, e. g. the tags
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFileIndexEntry'])) {
 			foreach ($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyFileIndexEntry'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyFileIndexEntry($file, $content, $additionalFields, $indexRecordValues, $this);
 			}
 		}

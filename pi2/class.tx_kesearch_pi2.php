@@ -42,7 +42,11 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 	 */
 	function main($content, $conf) {
 
-		$this->ms = t3lib_div::milliseconds();
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->ms = TYPO3\CMS\Core\Utility\GeneralUtility::milliseconds();
+		} else {
+			$this->ms = t3lib_div::milliseconds();
+		}
 		$this->conf = $conf;
 		$this->pi_setPiVarDefaults();
 		$this->pi_loadLL();
@@ -77,7 +81,11 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 		// hook for initials
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->addInitials($this);
 			}
 		}
@@ -87,7 +95,11 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 		// hook: modifyResultList
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyResultList'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyResultList'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->modifyResultList($content, $this);
 			}
 		}
@@ -131,7 +143,11 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 
 		// process query time
 		if($this->conf['showQueryTime']) {
-			$queryTime = (t3lib_div::milliseconds() - $GLOBALS['TSFE']->register['ke_search_queryStartTime']);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$queryTime = (TYPO3\CMS\Core\Utility\GeneralUtility::milliseconds() - $GLOBALS['TSFE']->register['ke_search_queryStartTime']);
+			} else {
+				$queryTime = (t3lib_div::milliseconds() - $GLOBALS['TSFE']->register['ke_search_queryStartTime']);
+			}
 			$content = $this->cObj->substituteMarker($content, '###QUERY_TIME###', sprintf($this->pi_getLL('query_time'), $queryTime));
 		} else {
 			$content = $this->cObj->substituteMarker($content, '###QUERY_TIME###', '');

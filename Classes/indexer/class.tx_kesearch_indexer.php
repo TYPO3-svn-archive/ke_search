@@ -70,7 +70,9 @@ class tx_kesearch_indexer {
 		$this->extConf = tx_kesearch_helper::getExtConf();
 		$this->extConfPremium = tx_kesearch_helper::getExtConfPremium();
 
-		if (TYPO3_VERSION_INTEGER >= 6002000) {
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Registry');
+		} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 			$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_Registry');
 		} else {
 			$this->registry = t3lib_div::makeInstance('t3lib_Registry');
@@ -125,7 +127,11 @@ class tx_kesearch_indexer {
 		// register additional fields which should be written to DB
 		if(is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['registerAdditionalFields'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['registerAdditionalFields'] as $_classRef) {
-				$_procObj = & t3lib_div::getUserObj($_classRef);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
 				$_procObj->registerAdditionalFields($this->additionalFields);
 			}
 		}
@@ -155,7 +161,11 @@ class tx_kesearch_indexer {
 			// hook for custom indexer
 			if(is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['customIndexer'])) {
 				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['customIndexer'] as $_classRef) {
-					$_procObj = & t3lib_div::getUserObj($_classRef);
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+					} else {
+						$_procObj = & t3lib_div::getUserObj($_classRef);
+					}
 					$content .= $_procObj->customIndexer($indexerConfig, $this);
 				}
 			}
@@ -185,7 +195,12 @@ class tx_kesearch_indexer {
 		// send notification in CLI mode
 		if ($mode == 'CLI') {
 			// send finishNotification
-			if ($extConf['finishNotification'] && t3lib_div::validEmail($extConf['notificationRecipient'])) {
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$isValidEmail = TYPO3\CMS\Core\Utility\GeneralUtility::validEmail($extConf['notificationRecipient']);
+			} else {
+				$isValidEmail = t3lib_div::validEmail($extConf['notificationRecipient']);
+			}
+			if ($extConf['finishNotification'] && $isValidEmail) {
 
 				// calculate and format indexing time
 				$indexingTime = time() - $this->startTime;
@@ -395,7 +410,11 @@ class tx_kesearch_indexer {
 			} else {
 				$tags = $tagChar . $indexerTag . $tagChar;
 			}
-			$tags = t3lib_div::uniqueList($tags);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$tags = TYPO3\CMS\Core\Utility\GeneralUtility::uniqueList($tags);
+			} else {
+				$tags = t3lib_div::uniqueList($tags);
+			}
 		}
 
 		$table = 'tx_kesearch_index';
@@ -722,8 +741,13 @@ class tx_kesearch_indexer {
 		$fields = 'title, tag';
 		$table = 'tx_kesearch_filteroptions';
 		$where = 'uid = "' . intval($tagUid) . '" ';
-		$where .= t3lib_befunc::BEenableFields($table, 0);
-		$where .= t3lib_befunc::deleteClause($table, 0);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table, 0);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table, 0);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table, 0);
+			$where .= t3lib_befunc::deleteClause($table, 0);
+		}
 
 		$row = $GLOBALS['TYPO3_DB']->exec_SELECTgetSingleRow(
 			$fields,
@@ -760,8 +784,13 @@ class tx_kesearch_indexer {
 		$fields = '*';
 		$table = 'tx_kesearch_indexerconfig';
 		$where = '1=1 ';
-		$where .= t3lib_befunc::BEenableFields($table);
-		$where .= t3lib_befunc::deleteClause($table);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
 		return $GLOBALS['TYPO3_DB']->exec_SELECTgetRows($fields, $table, $where);
 	}
 }

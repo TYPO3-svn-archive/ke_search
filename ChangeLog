@@ -1,6 +1,12 @@
 ChangeLog
 
-Version 1.8.5
+Version 1.8.6
+* task: make ke_search compatible with TYPO3 version 7. Adjust class names and use namespaces.
+
+Version 1.8.5, March 2015
+* feature: show preview images for results of ext:news. Thanks to designverign GmbH for sponsoring this feature.
+* feature: show alternative texts in preview images.
+* task: use FAL api for finding preview images.
 
 Version 1.8.4
 * bugfix: do not create language overlay for pages for language 0, that creates infinite loops while indexing. https://forge.typo3.org/issues/58427

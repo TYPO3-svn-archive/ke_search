@@ -64,8 +64,13 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 		// Copy those restrictions to the index.
 		$fields = '*';
 		$where = 'pid IN (' . implode(',', $indexPids) . ') ';
-		$where .= t3lib_befunc::BEenableFields($table);
-		$where .= t3lib_befunc::deleteClause($table);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields, $table, $where);
 		$indexedNewsCounter = 0;
 		$resCount = $GLOBALS['TYPO3_DB']->sql_num_rows($res);
@@ -87,9 +92,10 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 					foreach ($categoryData['uid_list'] as $catUid) {
 						// if category was found in list, set isInList 
 						// to true and break further processing.
-						if(t3lib_div::inList($this->indexerConfig['index_extnews_category_selection'], $catUid)) {
-							$isInList = true;
-							break;
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							if (\TYPO3\CMS\Core\Utility\GeneralUtility::inList($this->indexerConfig['index_extnews_category_selection'], $catUid)) { $isInList = true; break; }
+						} else {
+							if (t3lib_div::inList($this->indexerConfig['index_extnews_category_selection'], $catUid)) { $isInList = true; break; }
 						}
 					}
 
@@ -174,7 +180,11 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 				// hook for custom modifications of the indexed data, e.g. the tags
 				if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyExtNewsIndexEntry'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyExtNewsIndexEntry'] as $_classRef) {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							$_procObj = & \TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+						} else {
+							$_procObj = & t3lib_div::getUserObj($_classRef);
+						}
 						$_procObj->modifyExtNewsIndexEntry(
 							$title,
 							$abstract,
@@ -243,27 +253,41 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 		// news version 3 features system categories instead of it's own
 		// category system used in previous versions
 		if (version_compare(t3lib_extMgm::getExtensionVersion('news'), '3.0.0') >= 0) {
+
+			$where = ' AND tx_news_domain_model_news.uid = ' . $newsRecord['uid'] .
+				' AND sys_category_record_mm.tablenames = "tx_news_domain_model_news"';
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('sys_category') .  \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('sys_category');
+			} else {
+				$where .= t3lib_befunc::BEenableFields('sys_category') .  t3lib_befunc::deleteClause('sys_category');
+			}
+
 			$resCat = $GLOBALS['TYPO3_DB']->exec_SELECT_mm_query(
 				'sys_category.uid, sys_category.single_pid, sys_category.title',
 				'sys_category',
 				'sys_category_record_mm',
 				'tx_news_domain_model_news',
-				' AND tx_news_domain_model_news.uid = ' . $newsRecord['uid'] .
-				' AND sys_category_record_mm.tablenames = "tx_news_domain_model_news"' .
-				t3lib_befunc::BEenableFields('sys_category') .
-				t3lib_befunc::deleteClause('sys_category'),
+				$where,
 				'', // groupBy
 				'sys_category_record_mm.sorting' // orderBy
 			);
 		} else {
+
+			$where = ' AND tx_news_domain_model_news.uid = ' . $newsRecord['uid'];
+
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_news_domain_model_category') .  \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_news_domain_model_category');
+			} else {
+				$where .= t3lib_befunc::BEenableFields('tx_news_domain_model_category') .  t3lib_befunc::deleteClause('tx_news_domain_model_category');
+			}
+
 			$resCat = $GLOBALS['TYPO3_DB']->exec_SELECT_mm_query(
 				'tx_news_domain_model_category.uid, tx_news_domain_model_category.single_pid, tx_news_domain_model_category.title',
 				'tx_news_domain_model_news',
 				'tx_news_domain_model_news_category_mm',
 				'tx_news_domain_model_category',
-				' AND tx_news_domain_model_news.uid = ' . $newsRecord['uid'] .
-				t3lib_befunc::BEenableFields('tx_news_domain_model_category') .
-				t3lib_befunc::deleteClause('tx_news_domain_model_category'),
+				$where,
 				'', // groupBy
 				'tx_news_domain_model_news_category_mm.sorting' // orderBy
 			);
@@ -291,7 +315,11 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 	 */
 	private function addTagsFromNewsKeywords($tags, $newsRecord) {
 		if (!empty($newsRecord['keywords'])) {
-			$keywordsList = t3lib_div::trimExplode(',', $newsRecord['keywords']);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$keywordsList = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $newsRecord['keywords']);
+			} else {
+				$keywordsList = t3lib_div::trimExplode(',', $newsRecord['keywords']);
+			}
 			foreach ($keywordsList as $keyword) {
 				tx_kesearch_helper::makeTags($tags, array($keyword));
 			}
@@ -310,14 +338,20 @@ class tx_kesearch_indexer_types_news extends tx_kesearch_indexer_types {
 	 * @return string comma-separated list of tags
 	 */
 	private function addTagsFromNewsTags($tags, $newsRecord) {
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$addWhere = \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields('tx_news_domain_model_tag') . \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause('tx_news_domain_model_tag');
+		} else {
+			$addWhere = t3lib_befunc::BEenableFields('tx_news_domain_model_tag') . t3lib_befunc::deleteClause('tx_news_domain_model_tag');
+		}
+
 		$resTag = $GLOBALS['TYPO3_DB']->exec_SELECT_mm_query(
 			'tx_news_domain_model_tag.title',
 			'tx_news_domain_model_news',
 			'tx_news_domain_model_news_tag_mm',
 			'tx_news_domain_model_tag',
 			' AND tx_news_domain_model_news.uid = ' . $newsRecord['uid'] .
-			t3lib_befunc::BEenableFields('tx_news_domain_model_tag') .
-			t3lib_befunc::deleteClause('tx_news_domain_model_tag')
+			$addWhere
 		);
 			
 		while (($newsTag = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($resTag))) {

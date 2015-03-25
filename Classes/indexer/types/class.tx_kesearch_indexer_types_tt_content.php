@@ -49,13 +49,22 @@ class tx_kesearch_indexer_types_tt_content extends tx_kesearch_indexer_types_pag
 		// copied to the index
 		//$where .= t3lib_BEfunc::BEenableFields($table);
 		$where .= ' AND hidden=0';
-		$where .= t3lib_BEfunc::deleteClause($table);
+
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_BEfunc::deleteClause($table);
+		}
 
 		// get tags from page
 		$tags = $this->pageRecords[$uid]['tags'];
 
 		// get frontend groups for this page
-		$feGroupsPages = t3lib_div::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$feGroupsPages = TYPO3\CMS\Core\Utility\GeneralUtility::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		} else {
+			$feGroupsPages = t3lib_div::uniqueList(implode(',', $this->getRecursiveFeGroups($uid)));
+		}
 
 		$rows = $GLOBALS['TYPO3_DB']->exec_SELECTgetRows($fields, $table, $where);
 		if(count($rows)) {
@@ -98,7 +107,11 @@ class tx_kesearch_indexer_types_tt_content extends tx_kesearch_indexer_types_pag
 				// hook for custom modifications of the indexed data, e. g. the tags
 				if(is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyContentIndexEntry'])) {
 					foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyContentIndexEntry'] as $_classRef) {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
+						if (TYPO3_VERSION_INTEGER >= 7000000) {
+							$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+						} else {
+							$_procObj = & t3lib_div::getUserObj($_classRef);
+						}
 						$_procObj->modifyContentIndexEntry(
 							$row['header'],
 							$row,

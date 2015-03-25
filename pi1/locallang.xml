@@ -48,6 +48,7 @@
 			<label index="ff.showTypeIcon">Show result type icon?</label>
 			<label index="ff.showFilePreview">Show file preview instead of result icon if possible?</label>
 			<label index="ff.showPageImages">Show page images preview instead of result icon if available (images from page properties field "media")?</label>
+			<label index="ff.showNewsImages">Show news (ext:news) images preview?</label>
 			<label index="ff.showResultUrl">Show result URL?</label>
 			<label index="ff.renderResultUrlAsLink">Render result URL as link (a-Tag)?</label>
 			<label index="ff.showScore">Show score?</label>
@@ -151,6 +152,7 @@
 			<label index="ff.showTypeIcon">Zeige Ergebnistyp-Icon?</label>
 			<label index="ff.showFilePreview">Zeige Dateivorschau statt Ergebnistyp-Icon wenn möglich?</label>
 			<label index="ff.showPageImages">Zeige Bilder von Seiten wenn vorhanden (Bilder aus dem Feld "Media" in den Seiteneigenschaften)?</label>
+			<label index="ff.showNewsImages">Zeige Nachrichtenbilder (ext:news) als Vorschau?</label>
 			<label index="ff.showResultUrl">Ergebnis-URL anzeigen?</label>
 			<label index="ff.renderResultUrlAsLink">Generiere aus der Ergebnis-URL einen Link (a-Tag)?</label>
 			<label index="ff.showScore">Zeige Relevanz?</label>
