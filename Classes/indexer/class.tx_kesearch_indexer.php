@@ -230,7 +230,9 @@ class tx_kesearch_indexer {
 				// send the notification message
 				// use swiftmailer in 4.5 and above
 				if (TYPO3_VERSION_INTEGER >= 4005000) {
-					if (TYPO3_VERSION_INTEGER >= 6002000) {
+					if (TYPO3_VERSION_INTEGER >= 7000000) {
+						$mail = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Mail\\MailMessage');
+					} else if (TYPO3_VERSION_INTEGER >= 6002000) {
 						$mail = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_mail_Message');
 					} else {
 						$mail = t3lib_div::makeInstance('t3lib_mail_Message');

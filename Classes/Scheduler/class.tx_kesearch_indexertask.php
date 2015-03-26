@@ -27,7 +27,13 @@
 // include indexer class
 require_once(t3lib_extMgm::extPath('ke_search') . 'Classes/indexer/class.tx_kesearch_indexer.php');
 
-class tx_kesearch_indexertask extends tx_scheduler_Task {
+if (TYPO3_VERSION_INTEGER >= 6002000) {
+	abstract class tx_kesearch_indexertask_baseclass extends \TYPO3\CMS\Scheduler\Task\AbstractTask { }
+} else {
+	abstract class tx_kesearch_indexertask_baseclass extends tx_scheduler_Task { }
+}
+
+class tx_kesearch_indexertask extends tx_kesearch_indexertask_baseclass {
 
 	public function execute() {
 
@@ -40,9 +46,6 @@ class tx_kesearch_indexertask extends tx_scheduler_Task {
 		} else {
 			$indexer = t3lib_div::makeInstance('tx_kesearch_indexer');
 		}
-
-		// set indexer params
-		$cleanup = $this->extConf['cleanupInterval'];
 
 		// process
 		$response = $indexer->startIndexing(true, $this->extConf, 'CLI');
