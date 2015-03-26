@@ -63,37 +63,6 @@ class tx_kesearch_indexer_types_file extends tx_kesearch_indexer_types {
 	}
 
 	/**
-	 * initializes the object and the executables to get content of given files
-	 */
-	public function init() {
-		if ($this->extConf['pathPdftotext']) {
-			$pathPdftotext = rtrim($this->extConf['pathPdftotext'], '/') . '/';
-			$pathPdfinfo = rtrim($this->extConf['pathPdfinfo'], '/') . '/';
-
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
-			} else {
-				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
-			}
-
-			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
-			if ($safeModeEnabled || (@is_file($pathPdftotext . 'pdftotext' . $exe) && @is_file($pathPdfinfo . 'pdfinfo' . $exe))) {
-				$this->app['pdfinfo'] = $pathPdfinfo . 'pdfinfo' . $exe;
-				$this->app['pdftotext'] = $pathPdftotext . 'pdftotext' . $exe;
-				$this->isAppArraySet = true;
-			} else {
-				$this->isAppArraySet = false;
-			}
-		} else {
-			$this->isAppArraySet = false;
-		}
-
-		if (!$this->isAppArraySet) {
-			$this->addError('The path to pdftools is not correctly set in extension manager configuration. You can get the path with "which pdfinfo" or "which pdftotext".');
-		}
-	}
-
-	/**
 	 * This function was called from indexer object and saves content to index table
 	 *
 	 * @return string content which will be displayed in backend

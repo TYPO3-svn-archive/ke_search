@@ -5,6 +5,7 @@ Version 1.9.0
 * task: adjust backend module layout to TYPO3 7.
 * task: add information about indexer configurations in backend module "start indexing" and show button only if configurations exist.
 * task: set default number of filters to show to 10 instead of 0.
+* task: change check if external system tools exist (eg. pdfinfo), remove check for PHP safeMode since there's no API for that in TYPO3 version 7 and PHP safeMode is deprecated since PHP 5.3.
 
 Version 1.8.5, March 2015
 * feature: show preview images for results of ext:news. Thanks to designverign GmbH for sponsoring this feature.

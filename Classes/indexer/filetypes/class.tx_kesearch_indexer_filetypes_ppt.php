@@ -47,14 +47,8 @@ class tx_kesearch_indexer_filetypes_ppt extends tx_kesearch_indexer_types_file i
 		if ($this->extConf['pathCatdoc']) {
 			$pathCatdoc = rtrim($this->extConf['pathCatdoc'], '/') . '/';
 
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
-			} else {
-				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
-			}
-
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
-			if ($safeModeEnabled || (@is_file($pathCatdoc . 'catppt' . $exe))) {
+			if (is_executable($pathCatdoc . 'catppt' . $exe)) {
 				$this->app['catppt'] = $pathCatdoc . 'catppt' . $exe;
 				$this->isAppArraySet = true;
 			} else {

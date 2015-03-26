@@ -48,14 +48,8 @@ class tx_kesearch_indexer_filetypes_xls extends tx_kesearch_indexer_types_file i
 		if ($this->extConf['pathCatdoc']) {
 			$pathCatdoc = rtrim($this->extConf['pathCatdoc'], '/') . '/';
 
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
-			} else {
-				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
-			}
-
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
-			if ($safeModeEnabled || (@is_file($pathCatdoc . 'xls2csv' . $exe))) {
+			if (is_executable($pathCatdoc . 'xls2csv' . $exe)) {
 				$this->app['xls2csv'] = $pathCatdoc . 'xls2csv' . $exe;
 				$this->isAppArraySet = true;
 			} else {

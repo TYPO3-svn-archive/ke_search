@@ -48,14 +48,8 @@ class tx_kesearch_indexer_filetypes_doc extends tx_kesearch_indexer_types_file i
 		if ($this->extConf['pathCatdoc']) {
 			$pathCatdoc = rtrim($this->extConf['pathCatdoc'], '/') . '/';
 
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
-			} else {
-				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
-			}
-
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
-			if ($safeModeEnabled || (@is_file($pathCatdoc . 'catdoc' . $exe))) {
+			if (is_executable($pathCatdoc . 'catdoc' . $exe)) {
 				$this->app['catdoc'] = $pathCatdoc . 'catdoc' . $exe;
 				$this->isAppArraySet = true;
 			}
@@ -85,7 +79,10 @@ class tx_kesearch_indexer_filetypes_doc extends tx_kesearch_indexer_types_file i
 		} else {
 			$tempFileName = t3lib_div::tempnam('doc_files-Indexer');
 		}
-		@unlink($tempFileName); // Delete if exists, just to be safe.
+
+		// Delete if exists, just to be safe.
+		@unlink($tempFileName);
+
 		// generate and execute the pdftotext commandline tool
 		$cmd = $this->app['catdoc'] . ' -s8859-1 -dutf-8 ' . escapeshellarg($file) . ' > ' . $tempFileName;
 		if (TYPO3_VERSION_INTEGER >= 7000000) {

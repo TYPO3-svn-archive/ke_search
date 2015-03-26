@@ -43,19 +43,13 @@ class tx_kesearch_indexer_filetypes_pdf extends tx_kesearch_indexer_types_file i
 		// get extension configuration of ke_search_hooks
 		$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ke_search']);
 
-		//
+		// check if needed system tools pdftotext and pdfinfo exist
 		if ($this->extConf['pathPdftotext']) {
 			$pathPdftotext = rtrim($this->extConf['pathPdftotext'], '/') . '/';
 			$pathPdfinfo = rtrim($this->extConf['pathPdfinfo'], '/') . '/';
 
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$safeModeEnabled = \TYPO3\CMS\Core\Utility\PhpOptionsUtility::isSafeModeEnabled();
-			} else {
-				$safeModeEnabled = t3lib_utility_PhpOptions::isSafeModeEnabled();
-			}
-
 			$exe = (TYPO3_OS == 'WIN') ? '.exe' : '';
-			if ($safeModeEnabled || (@is_file($pathPdftotext . 'pdftotext' . $exe) && @is_file($pathPdfinfo . 'pdfinfo' . $exe))) {
+			if ((is_executable($pathPdftotext . 'pdftotext' . $exe) && is_executable($pathPdfinfo . 'pdfinfo' . $exe))) {
 				$this->app['pdfinfo'] = $pathPdfinfo . 'pdfinfo' . $exe;
 				$this->app['pdftotext'] = $pathPdftotext . 'pdftotext' . $exe;
 				$this->isAppArraySet = true;
@@ -144,7 +138,11 @@ class tx_kesearch_indexer_filetypes_pdf extends tx_kesearch_indexer_types_file i
 		if ($this->fileInfo->getIsFile()) {
 			if ($this->fileInfo->getExtension() == 'pdf' && $this->isAppArraySet) {
 				$cmd = $this->app['pdfinfo'] . ' ' . escapeshellarg($file);
-				t3lib_utility_Command::exec($cmd, $pdfInfoArray);
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					\TYPO3\CMS\Core\Utility\CommandUtility::exec($cmd, $pdfInfoArray);
+				} else {
+					t3lib_utility_Command::exec($cmd, $pdfInfoArray);
+				}
 				$pdfInfo = $this->splitPdfInfo($pdfInfoArray);
 				unset($pdfInfoArray);
 				return $pdfInfo;
