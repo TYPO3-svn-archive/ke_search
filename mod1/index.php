@@ -62,6 +62,15 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	function init()	{
 		global $BE_USER,$BACK_PATH,$TCA_DESCR,$TCA,$CLIENT,$TYPO3_CONF_VARS;
 		parent::init();
+
+		// init registry class
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Registry');
+		} else if (TYPO3_VERSION_INTEGER >= 6002000) {
+			$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_Registry');
+		} else {
+			$this->registry = t3lib_div::makeInstance('t3lib_Registry');
+		}
 	}
 
 	/**
@@ -98,18 +107,20 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 		} else {
 			$this->pageinfo = t3lib_BEfunc::readPageAccess($this->id,$this->perms_clause);
 		}
+
 		$access = is_array($this->pageinfo) ? 1 : 0;
 
-		if (($this->id && $access) || ($GLOBALS['BE_USER']->user['admin'] && !$this->id))	{
+		// create document template
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Backend\\Template\\DocumentTemplate');
+		} else if (TYPO3_VERSION_INTEGER >= 6002000) {
+			$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('mediumDoc');
+		} else {
+			$this->doc = t3lib_div::makeInstance('mediumDoc');
+		}
 
-				// Draw the header.
-			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Backend\\Template\\DocumentTemplate');
-			} else if (TYPO3_VERSION_INTEGER >= 6002000) {
-				$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('mediumDoc');
-			} else {
-				$this->doc = t3lib_div::makeInstance('mediumDoc');
-			}
+		if (($this->id && $access) || ($GLOBALS['BE_USER']->user['admin'] && !$this->id)) {
+
 			$this->doc->backPath = $BACK_PATH;
 			$this->doc->form='<form action="" method="post" enctype="multipart/form-data">';
 
@@ -130,184 +141,12 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 			';
 
 			// add some css
-			$this->doc->inDocStyles = '
-
-				.clearer {
-					line-height: 1px;
-					height: 1px;
-					clear: both;
-					display:block;
-				}
-
-				.box {
-					-moz-border-radius: 5px;
-					border-radius: 5px;
-					border: 1px solid #666;
-					padding: 5px;
-					margin-top: 10px;
-					background: #DDD;
-					box-shadow: 2px 2px 2px #AFAFAF;
-					-moz-box-shadow: 2px 2px 2px #AFAFAF;
-					-webkit-box-shadow: 2px 2px 2px #AFAFAF;
-				}
-				.box .headline {
-					-moz-border-radius: 5px;
-					border-radius: 5px;
-					border: 1px solid #666;
-					padding: 1px 1px 1px 5px;
-					background: #888;
-					color: white;
-					margin-bottom: 3px;
-					text-transform: uppercase;
-				}
-				.box .content {
-					-moz-border-radius: 5px;
-					border-radius: 5px;
-					border: 1px solid #666;
-					padding: 1px 1px 1px 5px;
-					background: white;
-				}
-
-				.info, .tag {
-					padding: 2px 4px;
-					-moz-border-radius: 5px;
-					border-radius: 5px;
-					border: 1px solid black;
-					background: white;
-					margin-left:2px;
-				}
-				.info {
-					width:48%;
-					float:left;
-				}
-
-				.summary {
-					-moz-border-radius: 10px;
-					border-radius: 10px;
-					border: 3px solid #666;
-					padding: 10px;
-					margin-top: 10px;
-					background: white;
-					box-shadow: 5px 5px 5px #AFAFAF;
-					-moz-box-shadow: 5px 5px 5px #AFAFAF;
-					-webkit-box-shadow: 5px 5px 5px #AFAFAF;
-
-				}
-				.summary .title {
-					font-size: 120%;
-					font-weight: bold;
-					margin-bottom: 8px;
-					display:block;
-				}
-				.summary .leftcol {
-					float: left;
-				}
-				.summary .rightcol {
-					float: right;
-					text-align: left;
-				}
-				.label {
-					font-weight: bold;
-				}
-				.value {
-					text-align: left;
-				}
-
-				.reindex-button,
-				a.index-button:hover,
-				.index-button {
-					-moz-border-radius: 7px;
-					border-radius: 7px;
-					box-shadow: 5px 5px 5px #AFAFAF;
-					-moz-box-shadow: 5px 5px 5px #AFAFAF;
-					-webkit-box-shadow: 5px 5px 5px #AFAFAF;
-					background: green;
-					padding: 5px;
-					width: 250px;
-					display: block;
-					text-align: center;
-					font-weight: bold;
-					color: white
-				}
-
-				a.index-button:hover {
-					background: darkgreen;
-				}
-
-				.reindex-button {
-					margin-top: 20px;
-				}
-
-				a.lock-button:hover,
-				.lock-button {
-					-moz-border-radius: 7px;
-					border-radius: 7px;
-					box-shadow: 5px 5px 5px #AFAFAF;
-					-moz-box-shadow: 5px 5px 5px #AFAFAF;
-					-webkit-box-shadow: 5px 5px 5px #AFAFAF;
-					background: red;
-					padding: 5px;
-					width: 250px;
-					display: block;
-					text-align: center;
-					font-weight: bold;
-					color: white
-				}
-
-				a.lock-button:hover {
-					background: #d60008;
-				}
-
-				table.statistics {
-					-moz-border-radius: 10px;
-					border-radius: 10px;
-					border: 3px solid #666;
-					padding: 10px;
-					margin-top: 20px;
-					background: white;
-					box-shadow: 5px 5px 5px #AFAFAF;
-					-moz-box-shadow: 5px 5px 5px #AFAFAF;
-					-webkit-box-shadow: 5px 5px 5px #AFAFAF;
-					border-spacing: 0;
-				}
-
-				table.statistics th {
-					background: #666;
-					color: white;
-					padding: 3px;
-				}
-
-				table.statistics td {
-					padding: 3px;
-				}
-
-				table.statistics td.even {
-					background: #CCC;
-				}
-
-				table.statistics td.odd {
-					background: white;
-				}
-
-				table.statistics td.times {
-					text-align: right;
-				}
-
-				.error {
-					font-weight: bold;
-					color: red;
-					-moz-border-radius: 10px;
-					border-radius: 10px;
-					border: 1px solid red;
-					padding: 10px;
-					margin: 10px;
-					background: white;
-					box-shadow: 2px 2px 2px red;
-					-moz-box-shadow: 5px 5px 5px red;
-					-webkit-box-shadow: 5px 5px 5px red;
-				}
-
-			';
+			$cssFile = 'res/backendModule.css';
+			if (TYPO3_VERSION_INTEGER >= 6002000) {
+				$this->doc->getPageRenderer()->addCssFile(t3lib_extMgm::extRelPath('ke_search') . $cssFile);
+			} else {
+				$this->doc->inDocStyles = file_get_contents(t3lib_extMgm::extPath('ke_search') . $cssFile);
+			}
 
 			$this->content .= '<div id="typo3-docheader"><div class="typo3-docheader-functions">';
 
@@ -317,6 +156,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 				$this->content .= t3lib_BEfunc::getFuncMenu($this->id,'SET[function]',$this->MOD_SETTINGS['function'],$this->MOD_MENU['function']);
 			}
 			$this->content .= '</div></div>';
+
 			$this->content .= '<div id="typo3-docbody"><div id="typo3-inner-docbody">';
 			$this->content .= $this->doc->startPage($GLOBALS['LANG']->getLL('title'));
 			$this->content .= $this->doc->header($GLOBALS['LANG']->getLL('title'));
@@ -326,24 +166,17 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 
 			// ShortCut
 			if ($BE_USER->mayMakeShortcut())	{
-				$this->content.=$this->doc->spacer(20).$this->doc->section('',$this->doc->makeShortcutIcon('id',implode(',',array_keys($this->MOD_MENU)),$this->MCONF['name']));
+				$this->content .= $this->doc->spacer(20).$this->doc->section('',$this->doc->makeShortcutIcon('id',implode(',',array_keys($this->MOD_MENU)),$this->MCONF['name']));
 			}
 
-			$this->content.=$this->doc->spacer(10);
+			$this->content .= $this->doc->spacer(10);
 		} else {
-				// If no access or if ID == zero
-
-			if (TYPO3_VERSION_INTEGER >= 6002000) {
-				$this->doc = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('mediumDoc');
-			} else {
-				$this->doc = t3lib_div::makeInstance('mediumDoc');
-			}
 			$this->doc->backPath = $BACK_PATH;
-			$this->content.= $GLOBALS['LANG']->getLL('select_a_page');
-			$this->content.=$this->doc->spacer(10);
+			$this->content .= '<div class="alert alert-info">' .  $GLOBALS['LANG']->getLL('select_a_page'). '</div>';
+			$this->content .= $this->doc->spacer(10);
 		}
-			$this->content.='</div></div>';
 
+		$this->content.='</div></div>';
 	}
 
 	/**
@@ -352,8 +185,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	 * @return	void
 	 */
 	function printContent()	{
-
-		$this->content.=$this->doc->endPage();
+		$this->content .= $this->doc->endPage();
 		echo $this->content;
 	}
 
@@ -363,8 +195,8 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	 * @return	void
 	 */
 	function moduleContent()	{
-
 		$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['ke_search']);
+		$content = '';
 
 		if (TYPO3_VERSION_INTEGER >= 7000000) {
 			$do = TYPO3\CMS\Core\Utility\GeneralUtility::_GET('do');
@@ -376,25 +208,21 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 
 			// start indexing process
 			case 1:
-				$content = '';
-
-				if (TYPO3_VERSION_INTEGER >= 7000000) {
-					$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Core\\Registry');
-				} else if (TYPO3_VERSION_INTEGER >= 6002000) {
-					$this->registry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('t3lib_Registry');
+				// make indexer instance and init
+				if (TYPO3_VERSION_INTEGER >= 6002000) {
+					/* @var $indexer tx_kesearch_indexer */
+					$indexer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('tx_kesearch_indexer');
 				} else {
-					$this->registry = t3lib_div::makeInstance('t3lib_Registry');
+					$indexer = t3lib_div::makeInstance('tx_kesearch_indexer');
 				}
 
+				// get indexer configurations
+				$indexerConfigurations = $indexer->getConfigurations();
+
+				// action: start indexer or remove lock
 				if ($do == 'startindexer') {
-					// make indexer instance and init
-					if (TYPO3_VERSION_INTEGER >= 6002000) {
-						$indexer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('tx_kesearch_indexer');
-					} else {
-						$indexer = t3lib_div::makeInstance('tx_kesearch_indexer');
-					}
-					$cleanup = $this->extConf['cleanupInterval'];
-					$content .= $indexer->startIndexing(true, $this->extConf); // start indexing in verbose mode with cleanup process
+					// start indexing in verbose mode with cleanup process
+					$content .= $indexer->startIndexing(true, $this->extConf); 
 				} else if ($do == 'rmLock') {
 					// remove lock from registry - admin only!
 					if ($GLOBALS['BE_USER']->user['admin']) {
@@ -404,15 +232,57 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 					}
 				}
 
+				// show information about indexer configurations and number of records
+				// if action "start indexing" is not selected
+				if ($do != 'startindexer') {
+					// show indexer names
+					if ($indexerConfigurations) {
+						$content .= '<p>' . $GLOBALS['LANG']->getLL('configurations_found') . '</p>';
+						$content .= '<ul>';
+						foreach ($indexerConfigurations as $indexerConfiguration) {
+							$content .=  '<li>' . $indexerConfiguration['title'] . '</li>';
+						}
+						$content .= '</ul>';
+					}
+
+					$numberOfRecords = $this->getNumberOfRecordsInIndex();
+					if ($numberOfRecords) {
+						$content .= '<p>' . $GLOBALS['LANG']->getLL('index_contains') . ' ' . $numberOfRecords . ' ' . $GLOBALS['LANG']->getLL('records') . '.</p>';
+					}
+				}
+
 				// check for index process lock in registry
+				// remove lock if older than 12 hours
 				$lockTime = $this->registry->get('tx_kesearch', 'startTimeOfIndexer');
-				if ($lockTime !== null) {
-					// lock is set
-					$compareTime = time() - (60*60*12);
-					if ($lockTime < $compareTime) {
+				$compareTime = time() - (60*60*12);
+				if ($lockTime !== null && $lockTime < $compareTime) {
 						// lock is older than 12 hours
 						// remove lock and show "start index" button
 						$this->registry->removeAllByNamespace('tx_kesearch');
+						$lockTime = null;
+				}
+
+				// show "start indexing" or "remove lock" button
+				if ($lockTime !== null) {
+					if (!$GLOBALS['BE_USER']->user['admin']) {
+						// print warning message for non-admins
+						$content .= '<br /><p style="color: red; font-weight: bold;">WARNING!</p>';
+						$content .= '<p>The indexer is already running and can not be started twice.</p>';
+					} else {
+						// show 'remove lock' button for admins
+						$content .= '<br /><p>The indexer is already running and can not be started twice.</p>';
+						$content .= '<p>The indexing process was started at '.strftime('%c', $lockTime).'.</p>';
+						$content .= '<p>You can remove the lock by clicking the following button.</p>';
+						if (TYPO3_VERSION_INTEGER < 6002000) {
+							$content .= '<br /><a class="lock-button" href="mod.php?id='.$this->id.'&M=web_txkesearchM1&do=rmLock">RemoveLock</a>';
+						} else{
+							$moduleUrl = TYPO3\CMS\Backend\Utility\BackendUtility::getModuleUrl('web_txkesearchM1', array('id' => $this->id, 'do' => 'rmLock'));
+							$content .= '<br /><a class="lock-button" href="' . $moduleUrl . '">RemoveLock</a>';
+						}
+					}
+				} else {
+					// no lock set - show "start indexer" link if indexer configurations have been found
+					if ($indexerConfigurations) {
 						if (TYPO3_VERSION_INTEGER < 6002000) {
 							$content .= '<br /><a class="index-button" href="mod.php?id='.$this->id.'&M=web_txkesearchM1&do=startindexer">' . $GLOBALS['LANG']->getLL('start_indexer') . '</a>';
 						} else {
@@ -420,51 +290,17 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 							$content .= '<br /><a class="index-button" href="' . $moduleUrl . '">' . $GLOBALS['LANG']->getLL('start_indexer') . '</a>';
 						}
 					} else {
-						// lock is not older than 12 hours
-						if (!$GLOBALS['BE_USER']->user['admin']) {
-							// print warning message for non-admins
-							$content .= '<br /><p style="color: red; font-weight: bold;">WARNING!</p>';
-							$content .= '<p>The indexer is already running and can not be started twice.</p>';
-						} else {
-							// show 'remove lock' button for admins
-							$content .= '<br /><p>The indexer is already running and can not be started twice.</p>';
-							$content .= '<p>The indexing process was started at '.strftime('%c', $lockTime).'.</p>';
-							$content .= '<p>You can remove the lock by clicking the following button.</p>';
-							if (TYPO3_VERSION_INTEGER < 6002000) {
-								$content .= '<br /><a class="lock-button" href="mod.php?id='.$this->id.'&M=web_txkesearchM1&do=rmLock">RemoveLock</a>';
-							} else{
-								$moduleUrl = TYPO3\CMS\Backend\Utility\BackendUtility::getModuleUrl('web_txkesearchM1', array('id' => $this->id, 'do' => 'rmLock'));
-								$content .= '<br /><a class="lock-button" href="' . $moduleUrl . '">RemoveLock</a>';
-							}
-						}
-					}
-				} else {
-					// no lock set - show "start indexer" link
-					if (TYPO3_VERSION_INTEGER < 6002000) {
-						$content .= '<br /><a class="index-button" href="mod.php?id='.$this->id.'&M=web_txkesearchM1&do=startindexer">' . $GLOBALS['LANG']->getLL('start_indexer') . '</a>';
-					} else {
-						$moduleUrl = TYPO3\CMS\Backend\Utility\BackendUtility::getModuleUrl('web_txkesearchM1', array('id' => $this->id, 'do' => 'startindexer'));
-						$content .= '<br /><a class="index-button" href="' . $moduleUrl . '">' . $GLOBALS['LANG']->getLL('start_indexer') . '</a>';
+						$content .= '<div class="alert alert-info">' . $GLOBALS['LANG']->getLL('no_indexer_configurations') . '</div>';
 					}
 				}
 
-				$this->content.=$this->doc->section('Start Indexer',$content,0,1);
+				$this->content .= $this->doc->section($GLOBALS['LANG']->getLL('start_indexer'), $content, 0, 1);
 			break;
 
 
 			// show indexed content
 			case 2:
 				if ($this->id) {
-
-					if ($do == 'reindex') {
-						if (TYPO3_VERSION_INTEGER >= 6002000) {
-							$indexer = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('tx_kesearch_indexer');
-						} else {
-							$indexer = t3lib_div::makeInstance('tx_kesearch_indexer');
-						}
-						$cleanup = $this->extConf['cleanupInterval'];
-						$content = $indexer->startIndexing(true, $this->extConf); // start indexing in verbose mode with cleanup process
-					}
 
 					// page is selected: get indexed content
 					$content = '<h2>Index content for page '.$this->id.'</h2>';
@@ -476,7 +312,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 					$content .= $this->getIndexedContent($this->id);
 				} else {
 					// no page selected: show message
-					$content = 'Select page first';
+					$content = '<div class="alert alert-info">' .  $GLOBALS['LANG']->getLL('select_a_page'). '</div>';
 				}
 
 				$this->content.=$this->doc->section('Show Indexed Content',$content,0,1);
@@ -507,17 +343,13 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 
 					// admin only access
 				if ($GLOBALS['BE_USER']->user['admin'])	{
-					$table = 'tx_kesearch_index';
 
 					if ($do == 'clear') {
-						$query = 'TRUNCATE TABLE ' . $table;
+						$query = 'TRUNCATE TABLE tx_kesearch_index' . $table;
 						$res = $GLOBALS['TYPO3_DB']->sql_query($query);
 					}
 
-					$query = 'SELECT COUNT(*) AS number_of_records FROM ' . $table;
-					$res = $GLOBALS['TYPO3_DB']->sql_query($query);
-					$row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
-					$content .= '<p>Search index table contains ' . $row['number_of_records'] . ' records.</p>';
+					$content .= '<p>' . $GLOBALS['LANG']->getLL('index_contains') . ' ' . $this->getNumberOfRecordsInIndex() . ' ' . $GLOBALS['LANG']->getLL('records') . '.</p>';
 
 					// show "clear index" link
 					if (TYPO3_VERSION_INTEGER < 6002000) {
@@ -539,6 +371,19 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 		}
 	}
 
+	/**
+	 * returns the number of records the index contains
+	 * @author Christian Bülter <buelter@kennziffer.com>
+	 * @since 26.03.15
+	 *
+	 * @return integer
+	 */
+	public function getNumberOfRecordsInIndex() {
+		$query = 'SELECT COUNT(*) AS number_of_records FROM tx_kesearch_index';
+		$res = $GLOBALS['TYPO3_DB']->sql_query($query);
+		$row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
+		return $row['number_of_records'];
+	}
 
 	/*
 	 * function renderIndexTableInformation
@@ -560,19 +405,19 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 				$content .= '
 					<table class="statistics">
 						<tr>
-							<td class="label">Records: </td>
+							<td class="infolabel">Records: </td>
 							<td>'.$row['Rows'].'</td>
 						</tr>
 						<tr>
-							<td class="label">Data size: </td>
+							<td class="infolabel">Data size: </td>
 							<td>'.$dataLength.'</td>
 						</tr>
 						<tr>
-							<td class="label">Index size: </td>
+							<td class="infolabel">Index size: </td>
 							<td>'.$indexLength.'</td>
 						</tr>
 						<tr>
-							<td class="label">Complete table size: </td>
+							<td class="infolabel">Complete table size: </td>
 							<td>'.$completeLength.'</td>
 						</tr>
 					</table>';
@@ -635,7 +480,11 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 			// build tag table
 			$tagTable = '<div class="tags" >';
 			$cols = 3;
-			$tags = t3lib_div::trimExplode(',', $row['tags'], true);
+			if (TYPO3_VERSION_INTEGER >= 7000000) {
+				$tags = TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $row['tags'], true);
+			} else {
+				$tags = t3lib_div::trimExplode(',', $row['tags'], true);
+			}
 			$i=1;
 			foreach ($tags as $tag) {
 				$tagTable .= '<span class="tag">' . $tag . '</span>';
@@ -682,7 +531,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	 * @return string
 	 */
 	function renderFurtherInformation($label, $content) {
-		return '<div class="info"><span class="label">' . $label . ': </span><span class="value">' . $content . '</span></div>';
+		return '<div class="info"><span class="infolabel">' . $label . ': </span><span class="value">' . $content . '</span></div>';
 	}
 
 	/**
@@ -693,7 +542,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 	 */
 	function getSearchwordStatistics($pageUid, $days) {
 		if (!$pageUid) {
-			$content = '<div class="error">Select page first!</div>';
+			$content = '<div class="alert alert-info">' .  $GLOBALS['LANG']->getLL('select_a_page'). '</div>';
 			return $content;
 		}
 
@@ -712,7 +561,7 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 		$languageResult = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields, $table, $where, $groupBy);
 
 		if (!$GLOBALS['TYPO3_DB']->sql_num_rows($languageResult)) {
-			$content .= '<div class="error">No statistic data found! Please select the sysfolder where your index is stored or the page where your search plugin is placed.</div>';
+			$content .= '<div class="alert alert-info">No statistic data found! Please select the sysfolder where your index is stored or the page where your search plugin is placed.</div>';
 			return $content;
 		}
 
@@ -791,8 +640,13 @@ class  tx_kesearch_module1 extends tx_kesearch_module_baseclass {
 		$fields = 'doktype';
 		$table = 'pages';
 		$where = 'uid="'.$this->id.'" ';
-		$where .= t3lib_befunc::BEenableFields($table,$inv=0);
-		$where .= t3lib_befunc::deleteClause($table,$inv=0);
+		if (TYPO3_VERSION_INTEGER >= 7000000) {
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::BEenableFields($table);
+			$where .= \TYPO3\CMS\Backend\Utility\BackendUtility::deleteClause($table);
+		} else {
+			$where .= t3lib_befunc::BEenableFields($table);
+			$where .= t3lib_befunc::deleteClause($table);
+		}
 		$res = $GLOBALS['TYPO3_DB']->exec_SELECTquery($fields,$table,$where,$groupBy='',$orderBy='',$limit='1');
 		$row=$GLOBALS['TYPO3_DB']->sql_fetch_assoc($res);
 		if ($row['doktype'] == 254) {
@@ -817,11 +671,6 @@ if (TYPO3_VERSION_INTEGER >= 6002000) {
 	$SOBE = t3lib_div::makeInstance('tx_kesearch_module1');
 }
 $SOBE->init();
-
-// Include files?
-foreach($SOBE->include_once as $INC_FILE)	include_once($INC_FILE);
-
 $SOBE->main();
 $SOBE->printContent();
-
 ?>
