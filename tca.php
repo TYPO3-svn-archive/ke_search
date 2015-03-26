@@ -133,6 +133,7 @@ $TCA['tx_kesearch_filters'] = array (
 			'label' => 'LLL:EXT:ke_search/locallang_db.xml:tx_kesearch_filters.amount',
 			'config' => array (
 				'type' => 'input',
+				'default' => '10',
 				'size' => '30',
 				'eval' => 'trim,int',
 			)
