@@ -196,7 +196,6 @@ class tx_kesearch_lib_filters_textlinks {
 		}
 
 		$contentFilters = $this->cObj->substituteMarkerArray($contentFilters, $markerArray);
-
 		return $contentFilters;
 	}
 
@@ -218,7 +217,7 @@ class tx_kesearch_lib_filters_textlinks {
 			$optionsOfCurrentFilter = array_intersect_key($allOptionsOfCurrentFilter, $additionalOptionValues);
 			// merge additional values into option array
 			if (TYPO3_VERSION_INTEGER >= 7000000) {
-				$optionsOfCurrentFilter = TYPO3\CMS\Core\Utility\GeneralUtility::array_merge_recursive_overrule((array)$optionsOfCurrentFilter, (array)$additionalOptionValues);
+				\TYPO3\CMS\Core\Utility\ArrayUtility::mergeRecursiveWithOverrule($optionsOfCurrentFilter, (array)$additionalOptionValues);
 			} else {
 				$optionsOfCurrentFilter = t3lib_div::array_merge_recursive_overrule((array)$optionsOfCurrentFilter, (array)$additionalOptionValues);
 			}
