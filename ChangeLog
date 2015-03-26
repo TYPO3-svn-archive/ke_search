@@ -1,12 +1,14 @@
 ChangeLog
 
-Version 1.8.6
+Version 1.9.0
 * task: make ke_search compatible with TYPO3 version 7. Adjust class names and use namespaces.
+* task: adjust backend module layout to TYPO3 7.
+* task: add information about indexer configurations in backend module "start indexing" and show button only if configurations exist.
 
 Version 1.8.5, March 2015
 * feature: show preview images for results of ext:news. Thanks to designverign GmbH for sponsoring this feature.
 * feature: show alternative texts in preview images.
-* task: use FAL api for finding preview images.
+* task: use FAL API for finding preview images.
 
 Version 1.8.4
 * bugfix: do not create language overlay for pages for language 0, that creates infinite loops while indexing. https://forge.typo3.org/issues/58427
