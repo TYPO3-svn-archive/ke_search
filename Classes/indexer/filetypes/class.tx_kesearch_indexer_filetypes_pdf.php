@@ -97,7 +97,7 @@ class tx_kesearch_indexer_filetypes_pdf extends tx_kesearch_indexer_types_file i
 			@unlink($tempFileName);
 
 			// generate and execute the pdftotext commandline tool
-			$cmd = $this->app['pdftotext'] . ' -enc UTF-8 -q ' . escapeshellarg($file) . ' ' . $tempFileName;
+			$cmd = $this->app['pdftotext'] . ' -enc UTF-8 -q ' . escapeshellarg($file) . ' ' . escapeshellarg($tempFileName);
 
 			if (TYPO3_VERSION_INTEGER >= 7000000) {
 				TYPO3\CMS\Core\Utility\CommandUtility::exec($cmd);

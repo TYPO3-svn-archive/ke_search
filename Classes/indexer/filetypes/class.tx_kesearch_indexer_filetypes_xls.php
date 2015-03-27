@@ -82,7 +82,7 @@ class tx_kesearch_indexer_filetypes_xls extends tx_kesearch_indexer_types_file i
 		@unlink($tempFileName);
 
 		// generate and execute the pdftotext commandline tool
-		$cmd = $this->app['xls2csv'] . ' -c \' \' -q 0 -s8859-1 -dutf-8 ' . escapeshellarg($file) . ' > ' . $tempFileName;
+		$cmd = $this->app['xls2csv'] . ' -c \' \' -q 0 -s8859-1 -dutf-8 ' . escapeshellarg($file) . ' > ' . escapeshellarg($tempFileName);
 
 		if (TYPO3_VERSION_INTEGER >= 7000000) {
 			TYPO3\CMS\Core\Utility\CommandUtility::exec($cmd);
