@@ -254,16 +254,13 @@ function hideSpinner() {
 
 <!-- ###RESULT_ROW### start -->
 <div class="result-list-item result-list-item-type-###TYPE###">
-	<!-- ###SUB_NUMERATION### start -->###NUMBER###.<!-- ###SUB_NUMERATION### end -->
-	<b>###TITLE###</b>
+	<!-- ###SUB_NUMERATION### start --><span class="result-number">###NUMBER###.</span><!-- ###SUB_NUMERATION### end -->
+	<span class="result-title">###TITLE###</span>
 	<!-- ###SUB_SCORE_SCALE### start -->
 		<span class="scoreBar">
 			<span class="score" style="width: ###SCORE###%;"></span>
 		</span>
 	<!-- ###SUB_SCORE_SCALE### end -->
-	<span class="clearer">&nbsp;</span>
-	<!-- ###SUB_TYPE_ICON### start --><span class="teaser_icon">###TYPE_ICON###</span><!-- ###SUB_TYPE_ICON### end -->
-	###TEASER###
 	<span class="clearer">&nbsp;</span>
 	<div class="add-info">
 	    <!-- ###SUB_RESULTURL### start -->
@@ -282,6 +279,9 @@ function hideSpinner() {
 		<i>###LABEL_TAGS###:</i> ###TAGS###<br />
 	    <!-- ###SUB_TAGS### end -->
 	</div>
+	<!-- ###SUB_TYPE_ICON### start --><span class="teaser_icon">###TYPE_ICON###</span><!-- ###SUB_TYPE_ICON### end -->
+	<span class="result-teaser">###TEASER###</span>
+	<span class="clearer">&nbsp;</span>
 </div>
 <!-- ###RESULT_ROW### end -->
 

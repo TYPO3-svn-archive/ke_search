@@ -7,6 +7,7 @@ Version 1.9.0
 * task: set default number of filters to show to 10 instead of 0.
 * task: change check if external system tools exist (eg. pdfinfo), remove check for PHP safeMode since there's no API for that in TYPO3 version 7 and PHP safeMode is deprecated since PHP 5.3.
 * bugfix: fix problem with path to tempory file. For example path contains spaces. Thanks to Nikolay Orlenko.
+* task: change default template (slightly) and default css in order to make the appearance more subtile and more suitable to wide range of websites out of the box.
 
 Version 1.8.5, March 2015
 * feature: show preview images for results of ext:news. Thanks to designverign GmbH for sponsoring this feature.
