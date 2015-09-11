@@ -137,7 +137,7 @@ class tx_kesearch_indexer_types_templavoila extends tx_kesearch_indexer_types {
 	 * @return string content which will be displayed in backend
 	 */
 	public function startIndexing() {
-		if(!this->templavoilaIsLoaded) {
+		if(!$this->templavoilaIsLoaded) {
 			return 'TemplaVoila is not installed!';
 		}
 

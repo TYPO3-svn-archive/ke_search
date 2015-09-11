@@ -91,7 +91,7 @@
 			<label index="tx_kesearch_indexerconfig.commenttypes">Comma separated list of comment types (eg. pages):</label>
 			<label index="tx_kesearch_indexerconfig.filteroption">Add tag to all indexed elements:</label>
 			<label index="tx_kesearch_indexerconfig.tvpath">Tell us in which field configuration the indexer can find the tt_content uids. Normally it should be "field_content":</label>
-			<label index="tx_kesearch_indexerconfig.fal_storage">FAL Storage</label>
+			<label index="tx_kesearch_indexerconfig.fal_storage">FAL Storage (IMPORTANT: backend user _cli_scheduler needs access to this storage!)</label>
 			<label index="tx_kesearch_indexerconfig.fal_storage.dont_use_fal">Dont' use FAL (write directories like 'fileadmin/user_upload/')</label>
 			<label index="tx_kesearch_indexerconfig.fal_storage.use_fal">Use FAL (write directories like 'user_upload/')</label>
 		</languageKey>

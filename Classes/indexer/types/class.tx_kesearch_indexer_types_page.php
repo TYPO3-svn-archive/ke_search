@@ -586,7 +586,6 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 		$feGroups = $this->getCombinedFeGroupsForContentElement($feGroupsPages, $ttContentRow['fe_group']);
 
 		if (count($fileObjects) && $feGroups != DONOTINDEX) {
-
 			// loop through files
 			foreach ($fileObjects as $fileObject) {
 
@@ -680,14 +679,13 @@ class tx_kesearch_indexer_types_page extends tx_kesearch_indexer_types {
 				if ($k % 2) {
 					$tagCode = \TYPO3\CMS\Core\Utility\GeneralUtility::unQuoteFilenames(trim(substr($rteHtmlParser->getFirstTag($v), 0, -1)), TRUE);
 					$link_param = $tagCode[1];
-					//debug($link_param);
 
 					// Check for FAL link-handler keyword
 					list($linkHandlerKeyword, $linkHandlerValue) = explode(':', trim($link_param), 2);
 					if ($linkHandlerKeyword === 'file') {
 						try {
 							$fileOrFolderObject = \TYPO3\CMS\Core\Resource\ResourceFactory::getInstance()->retrieveFileOrFolderObject(rawurldecode($linkHandlerValue));
-							if ($fileOrFolderObject instanceof \TYPO3\CMS\Core\Resource\FileInterface || $fileOrFolderObject instanceof \TYPO3\CMS\Core\Resource\Folder) {
+							if ($fileOrFolderObject instanceof \TYPO3\CMS\Core\Resource\FileInterface) {
 								$fileObjects[] = $fileOrFolderObject;
 							}
 						} catch (\TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException $resourceDoesNotExistException) {
