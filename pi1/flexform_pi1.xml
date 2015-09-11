@@ -1,4 +1,7 @@
 <T3DataStructure>
+	<meta>
+		<langDisable>1</langDisable>
+	</meta>
 	<sheets>
 		<MAIN>
 			<ROOT>
@@ -23,9 +26,35 @@
 						</TCEforms>
 					</resultPage>
 
+					<renderMethod>
+						<TCEforms>
+							<label>LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod</label>
+							<config>
+								<type>select</type>
+								<items>
+									<numIndex index="0">
+										<numIndex index="0">LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod.I.0</numIndex>
+										<numIndex index="1">static</numIndex>
+									</numIndex>
+									<numIndex index="1">
+										<numIndex index="0">LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod.I.1</numIndex>
+										<numIndex index="1">ajax_after_reload</numIndex>
+									</numIndex>
+									<numIndex index="2">
+										<numIndex index="0">LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod.I.2</numIndex>
+										<numIndex index="1">fluidtemplate</numIndex>
+									</numIndex>
+								</items>
+								<size>1</size>
+								<default>static</default>
+							</config>
+						</TCEforms>
+					</renderMethod>
+
 					<templateFile>
 						<TCEforms>
 							<exclude>1</exclude>
+							<displayCond>FIELD:renderMethod:!=:fluidtemplate</displayCond>
 							<label>LLL:EXT:ke_search/pi1/locallang.xml:ff.templateFile</label>
 							<config>
 								<type>input</type>
@@ -263,26 +292,6 @@
 						</TCEforms>
 					</resultsPerPage>
 
-					<renderMethod>
-						<TCEforms>
-							<label>LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod</label>
-							<config>
-								<type>select</type>
-								<items>
-									<numIndex index="0">
-										<numIndex index="0">LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod.I.0</numIndex>
-										<numIndex index="1">static</numIndex>
-									</numIndex>
-									<numIndex index="1">
-										<numIndex index="0">LLL:EXT:ke_search/pi1/locallang.xml:ff.renderMethod.I.1</numIndex>
-										<numIndex index="1">ajax_after_reload</numIndex>
-									</numIndex>
-								</items>
-								<size>1</size>
-								<default>static</default>
-							</config>
-						</TCEforms>
-					</renderMethod>
 
 					<countSearchPhrases>
 						<TCEforms>

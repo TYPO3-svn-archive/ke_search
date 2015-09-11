@@ -65,6 +65,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 	var $filtersFromFlexform = array(); // array with filter-uids as key and whole data as value
 	var $hasTooShortWords    = false; // contains a boolean value which represents if there are too short words in the searchstring
 	var $fileTypesWithPreviewPossible = array('pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'tif', 'tiff');
+	var $fluidTemplateVariables = array();
 
  	/**
 	 * @var tx_xajax
@@ -332,15 +333,17 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		$content = $this->cObj->getSubpart($this->templateCode,'###SEARCHBOX_STATIC###');
 
 		// set page = 1 if not set yet or if we are in static mode
-		if (!$this->piVars['page'] || $this->conf['renderMethod'] == 'static') {
+		if (!$this->piVars['page'] || $this->conf['renderMethod'] == 'static' || $this->conf['renderMethod'] == "fluidtemplate") {
 			$pageValue = 1;
 		} else {
 			$pageValue = $this->piVars['page'];
 		}
 		$content = $this->cObj->substituteMarker($content,'###HIDDEN_PAGE_VALUE###', $pageValue);
+		$this->fluidTemplateVariables['page'] = $pageValue;
 
 		// submit
-		$content = $this->cObj->substituteMarker($content,'###SUBMIT_VALUE###',$this->pi_getLL('submit'));
+		$content = $this->cObj->substituteMarker($content,'###SUBMIT_VALUE###', $this->pi_getLL('submit'));
+		$this->fluidTemplateVariables['submitAltText'] = $this->pi_getLL('submit');
 
 		// searchword input value
 		$searchString = $this->piVars['sword'];
@@ -358,11 +361,20 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		}
 
 		$content = $this->cObj->substituteMarker($content,'###SWORD_VALUE###', htmlspecialchars($this->swordValue));
+		$this->fluidTemplateVariables['searchword'] = htmlspecialchars($this->swordValue);
+
 		$content = $this->cObj->substituteMarker($content,'###SEARCHBOX_DEFAULT_VALUE###', htmlspecialchars($this->pi_getLL('searchbox_default_value')));
+		$this->fluidTemplateVariables['searchwordDefault'] = htmlspecialchars($this->pi_getLL('searchbox_default_value'));
+
 		$content = $this->cObj->substituteMarker($content,'###SWORD_ONFOCUS###', $searchboxFocusJS);
+
 		$content = $this->cObj->substituteMarker($content,'###SWORD_ONBLUR###', $searchboxBlurJS);
+
 		$content = $this->cObj->substituteMarker($content,'###SORTBYFIELD###', $this->piVars['sortByField']);
+		$this->fluidTemplateVariables['sortByField'] = $this->piVars['sortByField'];
+
 		$content = $this->cObj->substituteMarker($content,'###SORTBYDIR###', $this->piVars['sortByDir']);
+		$this->fluidTemplateVariables['sortByDir'] = $this->piVars['sortByDir'];
 
 		// set onsubmit action
 		if ($this->conf['renderMethod'] != 'static') {
@@ -373,10 +385,13 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		$content = $this->cObj->substituteMarker($content,'###ONSUBMIT###', $onSubmitMarker);
 
 		// get filters
-		$content = $this->cObj->substituteMarker($content, '###FILTER###', $this->renderFilters());
+		$renderedFilters = $this->renderFilters();
+		$content = $this->cObj->substituteMarker($content, '###FILTER###', $renderedFilters);
+		$this->fluidTemplateVariables['filter'] = $renderedFilters;
 
 		// set form action pid
 		$content = $this->cObj->substituteMarker($content,'###FORM_TARGET_PID###', $this->conf['resultPage']);
+		$this->fluidTemplateVariables['targetpage'] = $this->conf['resultPage'];
 
 		// set form action
 		if (TYPO3_VERSION_INTEGER >= 7000000) {
@@ -390,7 +405,9 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$mpParam = t3lib_div::_GET('MP');
 			$typeParam = t3lib_div::_GP('type');
 		}
-		$content = $this->cObj->substituteMarker($content,'###FORM_ACTION###', $siteUrl.'index.php');
+		$actionUrl =  $siteUrl . 'index.php';
+		$content = $this->cObj->substituteMarker($content,'###FORM_ACTION###', $actionUrl);
+		$this->fluidTemplateVariables['actionUrl'] = $actionUrl;
 
 		// set other hidden fields
 		$hiddenFieldsContent = '';
@@ -399,6 +416,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		if (isset($lParam)) {
 			$hiddenFieldValue = intval($lParam);
 			$hiddenFieldsContent .= '<input type="hidden" name="L" value="'.$hiddenFieldValue.'" />';
+			$this->fluidTemplateVariables['lparam'] = $hiddenFieldValue;
 		}
 
 		// mountpoint parameter
@@ -406,6 +424,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			// the only allowed characters in the MP parameter are digits and , and -
 			$hiddenFieldValue = preg_replace('/[^0-9,-]/', '', $mpParam);
 			$hiddenFieldsContent .= '<input type="hidden" name="MP" value="'.$hiddenFieldValue.'" />';
+			$this->fluidTemplateVariables['mpparam'] = $hiddenFieldValue;
 		}
 		$content = $this->cObj->substituteMarker($content,'###HIDDENFIELDS###', $hiddenFieldsContent);
 
@@ -414,6 +433,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$hiddenFieldValue = intval($typeParam);
 			$typeContent = $this->cObj->getSubpart($this->templateCode,'###SUB_PAGETYPE###');
 			$typeContent = $this->cObj->substituteMarker($typeContent,'###PAGETYPE###',$typeParam);
+			$this->fluidTemplateVariables['typeparam'] = $hiddenFieldValue;
 		} else $typeContent = '';
 		$content = $this->cObj->substituteSubpart ($content, '###SUB_PAGETYPE###', $typeContent, $recursive=1);
 
@@ -429,12 +449,12 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		unset($linkconf);
 		$linkconf['parameter'] = $this->conf['resultPage'];
 		$resetUrl = $this->cObj->typoLink_URL($linkconf);
-		$resetLink = '<a href="'.$resetUrl.'" class="resetButton"><span>'.$this->pi_getLL('reset_button').'</span></a>';
+		$this->fluidTemplateVariables['resetUrl'] = $resetUrl;
+		$resetLink = '<a href="' . $resetUrl . '" class="resetButton"><span>' . $this->pi_getLL('reset_button') . '</span></a>';
 		$content = $this->cObj->substituteMarker($content,'###RESET###',$resetLink);
 
 		// init onDomReadyAction
 		$this->initDomReadyAction();
-
 
 		return $content;
 	}

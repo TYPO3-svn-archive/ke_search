@@ -27,9 +27,10 @@
 			<label index="ff.previewMode.I.0">Always show abstract if set</label>
 			<label index="ff.previewMode.I.1">Show abstract if it contains searchword, otherwise show content</label>
 			<label index="ff.resultsPerPage">Results per page</label>
-			<label index="ff.renderMethod">Render method</label>
-			<label index="ff.renderMethod.I.0">static</label>
-			<label index="ff.renderMethod.I.1">AJAX after page load</label>
+			<label index="ff.renderMethod">Templating</label>
+			<label index="ff.renderMethod.I.0">marker based: static</label>
+			<label index="ff.renderMethod.I.1">marker based: AJAX after page load</label>
+			<label index="ff.renderMethod.I.2">Fluid</label>
 			<label index="ff.countSearchPhrases">Count search phrases in statistic tables?</label>
 			<label index="ff.templateFile">Template File</label>
 			<label index="ff.cssFile">CSS File</label>
@@ -131,9 +132,10 @@
 			<label index="ff.previewMode.I.0">Immer Abstract anzeigen (wenn gesetzt)</label>
 			<label index="ff.previewMode.I.1">Abstract anzeigen wenn Suchwort enthalten, ansonsten Inhaltstext</label>
 			<label index="ff.resultsPerPage">Ergebnisse pro Seite</label>
-			<label index="ff.renderMethod">Darstellung der Inhalte</label>
-			<label index="ff.renderMethod.I.0">statisch</label>
-			<label index="ff.renderMethod.I.1">AJAX nach Seitenaufbau</label>
+			<label index="ff.renderMethod">Templating</label>
+			<label index="ff.renderMethod.I.0">Marker-basiert: statisch</label>
+			<label index="ff.renderMethod.I.1">Marker-basiert: AJAX nach Seitenaufbau</label>
+			<label index="ff.renderMethod.I.2">Fluid</label>
 			<label index="ff.countSearchPhrases">Statistik über Suchbegriffe führen?</label>
 			<label index="ff.templateFile">Template-Datei</label>
 			<label index="ff.cssFile">CSS-Datei</label>

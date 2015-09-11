@@ -1,6 +1,8 @@
 ChangeLog
 
 Version 1.10.2
+- feature: fluid based templating
+- bugfix: add langDisable in flexform, https://forge.typo3.org/issues/64579
 
 Version 1.10.1
 * task: Output error message if PDF file is encrypted but return empty content instead of false.

@@ -2,7 +2,7 @@
 /***************************************************************
 *  Copyright notice
 *
-*  (c) 2010 Andreas Kiefer (kennziffer.com) <kiefer@kennziffer.com>
+*  (c) 2010 Andreas Kiefer <andreas.kiefer@inmedias.dem>
 *  All rights reserved
 *
 *  This script is part of the TYPO3 project. The TYPO3 project is
@@ -25,7 +25,8 @@
 /**
  * Plugin 'Faceted search - searchbox and filters' for the 'ke_search' extension.
  *
- * @author	Andreas Kiefer (kennziffer.com) <kiefer@kennziffer.com>
+ * @author	Andreas Kiefer <andreas.kiefer@inmedias.de>
+ * @author	Christian Bülter <christian.buelter@inmedias.de>
  * @package	TYPO3
  * @subpackage	tx_kesearch
  */
@@ -60,6 +61,85 @@ class tx_kesearch_pi1 extends tx_kesearch_lib {
 		// add header parts when in searchbox mode
 		$this->addHeaderParts();
 
+		// check for rendering method
+		if ($this->conf['renderMethod'] == 'fluidtemplate') {
+			if (TYPO3_VERSION_INTEGER < 6000000) {
+				return ('<span style="color: red;"><b>ke_search error:</b>Render method "Fluid template" needs at least TYPO3 version 6.</span>');
+			} else {
+				$this->initFluidTemplate();
+			}
+		} else {
+			$this->initMarkerTemplate();
+		}
+
+		// hook for initials
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'] as $_classRef) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
+				$_procObj->addInitials($this);
+			}
+		}
+
+		// get content
+		$content = $this->getSearchboxContent();
+		$subpart = $this->cObj->getSubpart($content, '###SHOW_SPINNER###');
+		if($this->conf['renderMethod'] == 'static') {
+			$content = $this->cObj->substituteSubpart($content, '###SHOW_SPINNER###', '');
+		} else {
+			$subpart = $this->cObj->substituteMarker($subpart, '###SPINNER###', $this->spinnerImageFilters);
+			$content = $this->cObj->substituteSubpart($content, '###SHOW_SPINNER###', $subpart);
+		}
+		$content = $this->cObj->substituteMarker($content,'###LOADING###',$this->pi_getLL('loading'));
+
+		// hook for additional searchbox markers
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['additionalSearchboxContent'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['additionalSearchboxContent'] as $_classRef) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
+				$_procObj->additionalSearchboxContent($content, $this);
+			}
+		}
+
+		if ($this->conf['renderMethod'] == 'fluidtemplate') {
+			$this->searchFormView->assignMultiple($this->fluidTemplateVariables);
+			$htmlOutput = $this->searchFormView->render();
+		} else {
+			$htmlOutput = $this->pi_wrapInBaseClass($content);
+		}
+		
+		return $htmlOutput;
+	}
+
+	/**
+	 * inits the standalone fluid template
+	 */
+	public function initFluidTemplate() {
+		/** @var \TYPO3\CMS\Fluid\View\StandaloneView $this->searchFormView */
+		$this->searchFormView = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Fluid\\View\\StandaloneView');
+
+		// set template paths
+		$templateRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['templateRootPath'] ? $this->conf['templateRootPath'] : 'EXT:ke_search/Resources/Private/Templates/');
+		$partialRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['partialRootPath'] ? $this->conf['partialRootPath'] : 'EXT:ke_search/Resources/Private/Partials/');
+		$layoutRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['layoutRootPath'] ? $this->conf['layoutRootPath'] : 'EXT:ke_search/Resources/Private/Layouts/');
+		$this->searchFormView->setPartialRootPath($partialRootPath);
+		$this->searchFormView->setLayoutRootPath($layoutRootPath);
+		$this->searchFormView->setTemplatePathAndFilename($templateRootPath . 'SearchForm.html');
+	}
+
+	/**
+	 * inits the "old school" marker based templates (static or ajax)
+	 *
+	 * @return string
+	 */
+	public function initMarkerTemplate() {
+
 		// init XAJAX?
 		if ($this->conf['renderMethod'] != 'static') {
 			if (TYPO3_VERSION_INTEGER < 6002000) {
@@ -88,51 +168,8 @@ class tx_kesearch_pi1 extends tx_kesearch_lib {
 
 		// get javascript onclick actions
 		$this->initOnclickActions();
-
-
-
-		// hook for initials
-		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'])) {
-			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'] as $_classRef) {
-				if (TYPO3_VERSION_INTEGER >= 7000000) {
-					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
-				} else {
-					$_procObj = & t3lib_div::getUserObj($_classRef);
-				}
-				$_procObj->addInitials($this);
-			}
-		}
-
-
-		// get content
-		$content = $this->getSearchboxContent();
-		$subpart = $this->cObj->getSubpart($content, '###SHOW_SPINNER###');
-		if($this->conf['renderMethod'] == 'static') {
-			$content = $this->cObj->substituteSubpart($content, '###SHOW_SPINNER###', '');
-		} else {
-			$subpart = $this->cObj->substituteMarker($subpart, '###SPINNER###', $this->spinnerImageFilters);
-			$content = $this->cObj->substituteSubpart($content, '###SHOW_SPINNER###', $subpart);
-		}
-		$content = $this->cObj->substituteMarker($content,'###LOADING###',$this->pi_getLL('loading'));
-
-		
-		// hook for additional searchbox markers
-		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['additionalSearchboxContent'])) {
-			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['additionalSearchboxContent'] as $_classRef) {
-				if (TYPO3_VERSION_INTEGER >= 7000000) {
-					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
-				} else {
-					$_procObj = & t3lib_div::getUserObj($_classRef);
-				}
-				$_procObj->additionalSearchboxContent($content, $this);
-			}
-		}
-		
-		return $this->pi_wrapInBaseClass($content);
 	}
-
 }
-
 
 if (defined('TYPO3_MODE') && $GLOBALS['TYPO3_CONF_VARS'][TYPO3_MODE]['XCLASS']['ext/ke_search/pi1/class.tx_kesearch_pi1.php'])	{
 	include_once($GLOBALS['TYPO3_CONF_VARS'][TYPO3_MODE]['XCLASS']['ext/ke_search/pi1/class.tx_kesearch_pi1.php']);
