@@ -117,8 +117,11 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			if(!$GLOBALS['TSFE']->register['ke_search_queryStartTime']) $GLOBALS['TSFE']->register['ke_search_queryStartTime'] = t3lib_div::milliseconds();
 		}
 
+		// make settings from flexform available in general configuration ($this->conf)
 		$this->moveFlexFormDataToConf();
 
+		// in pi2 (the list plugin) fetch the configuration from pi1 (the search
+		// box plugin) since all the configuration is done there
 		if(!empty($this->conf['loadFlexformsFromOtherCE'])) {
 			$data = $this->pi_getRecord('tt_content', intval($this->conf['loadFlexformsFromOtherCE']));
 			$this->cObj->data = $data;
@@ -173,20 +176,14 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		}
 
 		// get extension configuration array
-		//$this->extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf'][$this->extKey]);
 		$this->extConf = tx_kesearch_helper::getExtConf();
 		$this->extConfPremium = tx_kesearch_helper::getExtConfPremium();
 
 		// initialize filters
 		$this->filters->initialize($this);
 
-		// get html template
-		if (TYPO3_VERSION_INTEGER < 6002000) {
-			$this->templateFile = $this->conf['templateFile'] ? $this->conf['templateFile'] : t3lib_extMgm::siteRelPath($this->extKey) . 'res/template_pi1.tpl';
-		} else {
-			$this->templateFile = $this->conf['templateFile'] ? $this->conf['templateFile'] : TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey) . 'res/template_pi1.tpl';
-		}
-		$this->templateCode = $this->cObj->fileResource($this->templateFile);
+		// init templating (marker based or fluid)
+		$this->initTemplate();
 
 		// get first startingpoint
 		$this->firstStartingPoint = $this->div->getFirstStartingPoint($this->startingPoints);
@@ -272,6 +269,61 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		}
 	}
 
+	/**
+	 * 
+	 * initializes the marker based or fluid based template
+	 */
+	public function initTemplate() {
+
+		// check for rendering method
+		if ($this->conf['renderMethod'] == 'fluidtemplate') {
+			if (TYPO3_VERSION_INTEGER < 6000000) {
+				return ('<span style="color: red;"><b>ke_search error:</b>Render method "Fluid template" needs at least TYPO3 version 6.</span>');
+			} else {
+				$this->initFluidTemplate();
+			}
+		} else {
+			// get html template
+			if (TYPO3_VERSION_INTEGER < 6002000) {
+				$this->templateFile = $this->conf['templateFile'] ? $this->conf['templateFile'] : t3lib_extMgm::siteRelPath($this->extKey) . 'res/template_pi1.tpl';
+			} else {
+				$this->templateFile = $this->conf['templateFile'] ? $this->conf['templateFile'] : TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey) . 'res/template_pi1.tpl';
+			}
+			$this->templateCode = $this->cObj->fileResource($this->templateFile);
+		}
+	}
+
+	/**
+	 * inits the standalone fluid template
+	 */
+	public function initFluidTemplate() {
+		// set default template paths
+		$this->conf['templateRootPath'] = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['templateRootPath'] ? $this->conf['templateRootPath'] : 'EXT:ke_search/Resources/Private/Templates/');
+		$this->conf['partialRootPath'] = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['partialRootPath'] ? $this->conf['partialRootPath'] : 'EXT:ke_search/Resources/Private/Partials/');
+		$this->conf['layoutRootPath'] = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['layoutRootPath'] ? $this->conf['layoutRootPath'] : 'EXT:ke_search/Resources/Private/Layouts/');
+
+		/** @var \TYPO3\CMS\Fluid\View\StandaloneView $this->searchFormView */
+		$this->searchFormView = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Fluid\\View\\StandaloneView');
+		$this->searchFormView->setPartialRootPath($this->conf['partialRootPath']);
+		$this->searchFormView->setLayoutRootPath($this->conf['layoutRootPath']);
+		$this->searchFormView->setTemplatePathAndFilename($this->conf['templateRootPath'] . 'SearchForm.html');
+
+		/** @var \TYPO3\CMS\Fluid\View\StandaloneView $this->resultListView */
+		$this->resultListView = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Fluid\\View\\StandaloneView');
+		$this->resultListView->setPartialRootPath($this->conf['partialRootPath']);
+		$this->resultListView->setLayoutRootPath($this->conf['layoutRootPath']);
+		$this->resultListView->setTemplatePathAndFilename($this->conf['templateRootPath'] . 'ResultList.html');
+
+		// make settings available in fluid template
+		$this->resultListView->assign('conf', $this->conf);
+		$this->resultListView->assign('extConf', $this->extConf);
+		$this->resultListView->assign('extConfPremium', $this->extConfPremium);
+
+		$this->searchFormView->assign('conf', $this->conf);
+		$this->searchFormView->assign('extConf', $this->extConf);
+		$this->searchFormView->assign('extConfPremium', $this->extConfPremium);
+	}
+
 
 	/**
 	 * Move all FlexForm data of current record to conf array
@@ -324,8 +376,12 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 	}
 
 
-	/*
-	 * function getSearchboxContent
+	/**
+	 * creates the searchbox
+	 * 1. fills the marker for marker based templating and renders the searchbox
+	 * 2. fills fluid variables for fluid based templating to $this->fluidTemplateVariables
+	 *
+	 * @return string rendered searchbox (for static or ajax templating, not for fluid templating)
 	 */
 	public function getSearchboxContent() {
 
@@ -1345,8 +1401,12 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 	}
 
 
-	/*
-	 * function getSearchResults
+	/**
+	 * creates the search result list
+	 * 1. fills the marker for marker based templating and renders the resultlist
+	 * 2. fills fluid variables for fluid based templating to $this->fluidTemplateVariables
+	 *
+	 * @return string rendered searchbox (for static or ajax templating, not for fluid templating)
 	 */
 	public function getSearchResults() {
 		// generate and add onload image
@@ -1359,6 +1419,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$rows = array_slice($rows, $limit[0], $limit[1]);
 		}
 		$this->numberOfResults = $this->db->getAmountOfSearchResults();
+		$this->fluidTemplateVariables['numberofresults'] = $this->numberOfResults;
 
 		// count searchword with ke_stats
 		$this->countSearchWordWithKeStats($this->sword);

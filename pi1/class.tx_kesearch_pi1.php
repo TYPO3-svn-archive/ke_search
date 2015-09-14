@@ -61,14 +61,8 @@ class tx_kesearch_pi1 extends tx_kesearch_lib {
 		// add header parts when in searchbox mode
 		$this->addHeaderParts();
 
-		// check for rendering method
-		if ($this->conf['renderMethod'] == 'fluidtemplate') {
-			if (TYPO3_VERSION_INTEGER < 6000000) {
-				return ('<span style="color: red;"><b>ke_search error:</b>Render method "Fluid template" needs at least TYPO3 version 6.</span>');
-			} else {
-				$this->initFluidTemplate();
-			}
-		} else {
+		// init marker template for pi1 if not in fluid rendering mode
+		if ($this->conf['renderMethod'] != 'fluidtemplate') {
 			$this->initMarkerTemplate();
 		}
 
@@ -84,8 +78,40 @@ class tx_kesearch_pi1 extends tx_kesearch_lib {
 			}
 		}
 
-		// get content
+		// get content for searchbox (get the real content for marker based
+		// templating and fill the variables for fluid rendering)
 		$content = $this->getSearchboxContent();
+
+		// show loading message for marker based and ajax template
+		if ($this->conf['renderMethod'] != 'fluidtemplate') {
+			$content = $this->renderAdditionalSearchboxContent($content);
+		}
+
+		if ($this->conf['renderMethod'] == 'fluidtemplate') {
+			// include some JS for the filters. set default for JSPath.
+			// TODO: make it possible to deactivate the inclusion of a js file
+			$this->conf['JSPath'] = $this->conf['JSPath'] ? $this->conf['JSPath'] : 'typo3conf/ext/ke_search/Resources/Public/JS/';
+			$GLOBALS['TSFE']->getPageRenderer()->addJsLibrary('ke_search_searchbox_js', $this->conf['JSPath'] . 'SearchboxHeaderJS.js');
+
+			// assign variables and do the rendering
+			$this->searchFormView->assignMultiple($this->fluidTemplateVariables);
+			$htmlOutput = $this->searchFormView->render();
+		} else {
+			$htmlOutput = $this->pi_wrapInBaseClass($content);
+		}
+		
+		return $htmlOutput;
+	}
+
+	/**
+	 * renders the "spinner" and loading note and provides a hook for
+	 * even more content in the searchbox (only for static and ajax
+	 * template, not for fluid template)
+	 * 
+	 * @param string $content
+	 * @return string
+	 */
+	public function renderAdditionalSearchboxContent($content) {
 		$subpart = $this->cObj->getSubpart($content, '###SHOW_SPINNER###');
 		if($this->conf['renderMethod'] == 'static') {
 			$content = $this->cObj->substituteSubpart($content, '###SHOW_SPINNER###', '');
@@ -106,31 +132,7 @@ class tx_kesearch_pi1 extends tx_kesearch_lib {
 				$_procObj->additionalSearchboxContent($content, $this);
 			}
 		}
-
-		if ($this->conf['renderMethod'] == 'fluidtemplate') {
-			$this->searchFormView->assignMultiple($this->fluidTemplateVariables);
-			$htmlOutput = $this->searchFormView->render();
-		} else {
-			$htmlOutput = $this->pi_wrapInBaseClass($content);
-		}
-		
-		return $htmlOutput;
-	}
-
-	/**
-	 * inits the standalone fluid template
-	 */
-	public function initFluidTemplate() {
-		/** @var \TYPO3\CMS\Fluid\View\StandaloneView $this->searchFormView */
-		$this->searchFormView = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Fluid\\View\\StandaloneView');
-
-		// set template paths
-		$templateRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['templateRootPath'] ? $this->conf['templateRootPath'] : 'EXT:ke_search/Resources/Private/Templates/');
-		$partialRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['partialRootPath'] ? $this->conf['partialRootPath'] : 'EXT:ke_search/Resources/Private/Partials/');
-		$layoutRootPath = \TYPO3\CMS\Core\Utility\GeneralUtility::getFileAbsFileName($this->conf['layoutRootPath'] ? $this->conf['layoutRootPath'] : 'EXT:ke_search/Resources/Private/Layouts/');
-		$this->searchFormView->setPartialRootPath($partialRootPath);
-		$this->searchFormView->setLayoutRootPath($layoutRootPath);
-		$this->searchFormView->setTemplatePathAndFilename($templateRootPath . 'SearchForm.html');
+		return $content;
 	}
 
 	/**

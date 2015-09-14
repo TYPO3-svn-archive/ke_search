@@ -60,32 +60,10 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			return $this->pi_wrapInBaseClass($content);
 		}
 
-		// init XAJAX?
-		if ($this->conf['renderMethod'] != 'static') {
-			if (TYPO3_VERSION_INTEGER < 6002000) {
-				$xajaxIsLoaded = t3lib_extMgm::isLoaded('xajax');
-			} else {
-				$xajaxIsLoaded = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('xajax');
-			}
-			if (!$xajaxIsLoaded) return;
-			else $this->initXajax();
+		// init marker template for pi2 if not in fluid rendering mode
+		if ($this->conf['renderMethod'] != 'fluidtemplate') {
+			$this->initMarkerTemplate();
 		}
-
-		// Spinner Image
-		if ($this->conf['spinnerImageFile']) {
-			$spinnerSrc = $this->conf['spinnerImageFile'];
-		} else {
-			if (TYPO3_VERSION_INTEGER < 6002000) {
-				$spinnerSrc = t3lib_extMgm::siteRelPath($this->extKey).'res/img/spinner.gif';
-			} else {
-				$spinnerSrc = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey).'res/img/spinner.gif';
-			}
-		}
-		$this->spinnerImageFilters = '<img id="kesearch_spinner_filters" src="'.$spinnerSrc.'" alt="'.$this->pi_getLL('loading').'" />';
-		$this->spinnerImageResults = '<img id="kesearch_spinner_results" src="'.$spinnerSrc.'" alt="'.$this->pi_getLL('loading').'" />';
-
-		// get javascript onclick actions
-		$this->initOnclickActions();
 
 		// hook for initials
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['initials'])) {
@@ -99,7 +77,10 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			}
 		}
 
-		$content = $this->cObj->getSubpart($this->templateCode, '###RESULT_LIST###');
+		// fetch template code for marker based templating
+		if ($this->conf['renderMethod'] != 'fluidtemplate') {
+			$content = $this->cObj->getSubpart($this->templateCode, '###RESULT_LIST###');
+		}
 
 		// hook: modifyResultList
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyResultList'])) {
@@ -113,32 +94,24 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			}
 		}
 
-		// show text instead of results if no searchparams set and activated in ff
-		if($this->isEmptySearch && $this->conf['showTextInsteadOfResults']) {
-			// Don't replace the following with substituteMarker
-			// this is used to be valid against JavaScript calls
-			$content = '<div id="textmessage">'.$this->pi_RTEcssText($this->conf['textForResults']).'</div>';
-			$content .= '<div id="kesearch_results"></div>';
-			$content .= '<div id="kesearch_updating_results"></div>';
-			$content .= '<div id="kesearch_pagebrowser_top"></div>';
-			$content .= '<div id="kesearch_pagebrowser_bottom"></div>';
-			$content .= '<div id="kesearch_query_time"></div>';
-			return $content;
+		// assign isEmptySearch to fluid templates
+		$this->fluidTemplateVariables['isEmptySearch'] = $this->isEmptySearch;
+
+		// if there's exclusive content do the rendering and stop here
+		if ($this->conf['renderMethod'] != 'fluidtemplate') {
+			$exclusiveContent = $this->renderExclusiveMarkerBasedContent();
+			if ($exclusiveContent) {
+				return $exclusiveContent;
+			}
 		}
 
-		if($this->conf['renderMethod'] == 'ajax_after_reload') {
-			$content = $this->cObj->substituteMarker($content,'###MESSAGE###', '');
-			$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
-			$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
-			$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_BOTTOM###', '');
-			$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', '');
-			$content = $this->cObj->substituteMarker($content,'###ORDERING###', '');
-			$content = $this->cObj->substituteMarker($content,'###SPINNER###', '');
-			$content = $this->cObj->substituteMarker($content,'###LOADING###', '');
-			return $this->pi_wrapInBaseClass($content);
-		}
 
 		$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $this->getSearchResults());
+
+
+		//******************************************+
+		// TODO: add to fluid template
+		//******************************************+
 		$content = $this->cObj->substituteMarker($content, '###NUMBER_OF_RESULTS###', sprintf($this->pi_getLL('num_results'), $this->numberOfResults));
 		$content = $this->cObj->substituteMarker($content, '###ORDERING###', $this->renderOrdering());
 		$subpart = $this->cObj->getSubpart($content, '###SHOW_SPINNER###');
@@ -179,8 +152,87 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			}
 		}
 
-		return $this->pi_wrapInBaseClass($content);
+		if ($this->conf['renderMethod'] == 'fluidtemplate') {
+			$this->resultListView->assignMultiple($this->fluidTemplateVariables);
+			$htmlOutput = $this->resultListView->render();
+		} else {
+			$htmlOutput = $this->pi_wrapInBaseClass($content);
+		}
+
+		return $htmlOutput;
 	}
+
+
+	/**
+	 * inits the marker based template for pi2
+	 *
+	 */
+	public function initMarkerTemplate() {
+		// init XAJAX?
+		if ($this->conf['renderMethod'] != 'static') {
+			if (TYPO3_VERSION_INTEGER < 6002000) {
+				$xajaxIsLoaded = t3lib_extMgm::isLoaded('xajax');
+			} else {
+				$xajaxIsLoaded = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::isLoaded('xajax');
+			}
+			if (!$xajaxIsLoaded) return;
+			else $this->initXajax();
+		}
+
+		// Spinner Image
+		if ($this->conf['spinnerImageFile']) {
+			$spinnerSrc = $this->conf['spinnerImageFile'];
+		} else {
+			if (TYPO3_VERSION_INTEGER < 6002000) {
+				$spinnerSrc = t3lib_extMgm::siteRelPath($this->extKey).'res/img/spinner.gif';
+			} else {
+				$spinnerSrc = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey).'res/img/spinner.gif';
+			}
+		}
+		$this->spinnerImageFilters = '<img id="kesearch_spinner_filters" src="'.$spinnerSrc.'" alt="'.$this->pi_getLL('loading').'" />';
+		$this->spinnerImageResults = '<img id="kesearch_spinner_results" src="'.$spinnerSrc.'" alt="'.$this->pi_getLL('loading').'" />';
+
+		// get javascript onclick actions
+		$this->initOnclickActions();
+	}
+
+	/**
+	 * renders marker based content which is exclusive, that means no other content
+	 * will be created for the result list.
+	 * Only valid for marker based (statc, ajax) template, not for fluid
+	 *
+	 * @return string
+	 */
+	public function renderExclusiveMarkerBasedContent() {
+
+		// show text instead of results if no searchparams set and activated in ff
+		if ($this->isEmptySearch && $this->conf['showTextInsteadOfResults']) {
+			// Don't replace the following with substituteMarker
+			// this is used to be valid against JavaScript calls
+			$content = '<div id="textmessage">'.$this->pi_RTEcssText($this->conf['textForResults']).'</div>';
+			$content .= '<div id="kesearch_results"></div>';
+			$content .= '<div id="kesearch_updating_results"></div>';
+			$content .= '<div id="kesearch_pagebrowser_top"></div>';
+			$content .= '<div id="kesearch_pagebrowser_bottom"></div>';
+			$content .= '<div id="kesearch_query_time"></div>';
+			return $content;
+		}
+
+		if ($this->conf['renderMethod'] == 'ajax_after_reload') {
+			$content = $this->cObj->substituteMarker($content,'###MESSAGE###', '');
+			$content = $this->cObj->substituteMarker($content,'###QUERY_TIME###', '');
+			$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_TOP###', '');
+			$content = $this->cObj->substituteMarker($content,'###PAGEBROWSER_BOTTOM###', '');
+			$content = $this->cObj->substituteMarker($content,'###NUMBER_OF_RESULTS###', '');
+			$content = $this->cObj->substituteMarker($content,'###ORDERING###', '');
+			$content = $this->cObj->substituteMarker($content,'###SPINNER###', '');
+			$content = $this->cObj->substituteMarker($content,'###LOADING###', '');
+			return $this->pi_wrapInBaseClass($content);
+		}
+
+		return $content;
+	}
+
 }
 
 

@@ -72,6 +72,7 @@
 
 			<label index="results">Search results</label>
 			<label index="num_results">%s results:</label>
+			<label index="num_results_plain">results</label>
 			<label index="until">until</label>
 			<label index="of">of</label>
 			<label index="no_results_found">No results found</label>
@@ -177,6 +178,7 @@
 
 			<label index="results">Suchergebnisse</label>
 			<label index="num_results">%s Treffer: </label>
+			<label index="num_results_plain">Treffer</label>
 			<label index="until">bis</label>
 			<label index="of">von</label>
 			<label index="no_results_found">Keine Ergebnisse gefunden</label>
