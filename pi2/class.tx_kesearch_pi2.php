@@ -82,7 +82,7 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			$content = $this->cObj->getSubpart($this->templateCode, '###RESULT_LIST###');
 		}
 
-		// hook: modifyResultList
+		// hook: modifyResultList (only valid for marker based templating, not for fluid based templating)
 		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyResultList'])) {
 			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['modifyResultList'] as $_classRef) {
 				if (TYPO3_VERSION_INTEGER >= 7000000) {
@@ -105,14 +105,18 @@ class tx_kesearch_pi2 extends tx_kesearch_lib {
 			}
 		}
 
+		// render "no results"-message, "too short words"-message and finally the result list
+		$resultList = $this->getSearchResults();
+		$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $resultList);
 
-		$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $this->getSearchResults());
-
-
-		//******************************************+
-		// TODO: add to fluid template
-		//******************************************+
+		// number of results
 		$content = $this->cObj->substituteMarker($content, '###NUMBER_OF_RESULTS###', sprintf($this->pi_getLL('num_results'), $this->numberOfResults));
+		$this->fluidTemplateVariables['numberofresults'] = $this->numberOfResults;
+
+		//******************************************+
+		// TODO
+		//******************************************+
+
 		$content = $this->cObj->substituteMarker($content, '###ORDERING###', $this->renderOrdering());
 		$subpart = $this->cObj->getSubpart($content, '###SHOW_SPINNER###');
 		if($this->conf['renderMethod'] == 'static') {

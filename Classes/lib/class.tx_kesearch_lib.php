@@ -1400,11 +1400,93 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		return $objResponse->getXML();
 	}
 
+	/**
+	 * render the text for "no results"
+	 *
+	 * @return string
+	 */
+	public function renderNoResultsText() {
+		// get subpart for general message
+		$content = $this->cObj->getSubpart($this->templateCode, '###GENERAL_MESSAGE###');
+
+		// no results found
+		if($this->conf['showNoResultsText']) {
+			// use individual text set in flexform
+			$noResultsText = $this->pi_RTEcssText($this->conf['noResultsText']);
+			$attentionImage = '';
+		} else {
+			// use general text
+			$noResultsText = $this->pi_getLL('no_results_found');
+
+			// attention icon (only in marker based template)
+			unset($imageConf);
+			if (TYPO3_VERSION_INTEGER < 6002000) {
+				$imageConf['file'] = t3lib_extMgm::siteRelPath($this->extKey).'res/img/attention.gif';
+			} else {
+				$imageConf['file'] = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey).'res/img/attention.gif';
+			}
+			$imageConf['altText'] = $this->pi_getLL('no_results_found');
+			$attentionImage = $this->cObj->IMAGE($imageConf);
+		}
+
+		// hook to implement your own idea of a no result message
+		if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['noResultsHandler'])) {
+			foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['noResultsHandler'] as $_classRef) {
+				if (TYPO3_VERSION_INTEGER >= 7000000) {
+					$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
+				} else {
+					$_procObj = & t3lib_div::getUserObj($_classRef);
+				}
+				$_procObj->noResultsHandler($noResultsText, $this);
+			}
+		}
+
+		// set text for "no results found"
+		$content = $this->cObj->substituteMarker($content,'###MESSAGE###', $noResultsText);
+		$this->fluidTemplateVariables['noResultsText'] = $noResultsText;
+
+		// set attention icon. Note: Not used for fluid template. Use the "NoResults"-Partial to set an image.
+		$content = $this->cObj->substituteMarker($content,'###IMAGE###', $attentionImage);
+
+		// add onload image if in AJAX mode
+		if($this->conf['renderMethod'] == 'ajax_after_reload') {
+			$content .= $this->onloadImage;
+		}
+
+		return $content;
+	}
+
+	/**
+	 * render message if at least one word in the search phrase is too short
+	 *
+	 * @return string
+	 */
+	public function renderTooShortWordsText() {
+		// get subpart for general message
+		$content = $this->cObj->getSubpart($this->templateCode, '###GENERAL_MESSAGE###');
+		$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $this->pi_getLL('searchword_length_error'));
+
+		// attention icon
+		unset($imageConf);
+		if (TYPO3_VERSION_INTEGER < 6002000) {
+			$imageConf['file'] = t3lib_extMgm::siteRelPath($this->extKey) . 'res/img/attention.gif';
+		} else {
+			$imageConf['file'] = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey) . 'res/img/attention.gif';
+		}
+		$imageConf['altText'] = $this->pi_getLL('no_results_found');
+		$attentionImage=$this->cObj->IMAGE($imageConf);
+
+		// set attention icon?
+		$content = $this->cObj->substituteMarker($content, '###IMAGE###', $attentionImage);
+
+		return $content;
+	}
 
 	/**
 	 * creates the search result list
-	 * 1. fills the marker for marker based templating and renders the resultlist
-	 * 2. fills fluid variables for fluid based templating to $this->fluidTemplateVariables
+	 * 1. does the actual searching (fetches the results to $rows)
+	 * 2. fills the marker for marker based templating and renders the resultlist
+	 * 3. fills fluid variables for fluid based templating to $this->fluidTemplateVariables
 	 *
 	 * @return string rendered searchbox (for static or ajax templating, not for fluid templating)
 	 */
@@ -1412,14 +1494,17 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 		// generate and add onload image
 		$this->onloadImage = $this->createHideSpinner();
 
+		// fetch the search results
 		$limit = $this->db->getLimit();
 		$rows = $this->db->getSearchResults();
+
 		// TODO: Check how Sphinx handles this, seems to return full result set
 		if(count($rows) > $limit[1]) {
 			$rows = array_slice($rows, $limit[0], $limit[1]);
 		}
+
+		// set number of results
 		$this->numberOfResults = $this->db->getAmountOfSearchResults();
-		$this->fluidTemplateVariables['numberofresults'] = $this->numberOfResults;
 
 		// count searchword with ke_stats
 		$this->countSearchWordWithKeStats($this->sword);
@@ -1429,73 +1514,14 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$this->countSearchPhrase($this->sword, $this->swords, $this->numberOfResults, $this->tagsAgainst);
 		}
 
-		if($this->numberOfResults == 0) {
-
-			// get subpart for general message
-			$content = $this->cObj->getSubpart($this->templateCode, '###GENERAL_MESSAGE###');
-
-			// no results found
-			if($this->conf['showNoResultsText']) {
-				// use individual text set in flexform
-				$noResultsText = $this->pi_RTEcssText($this->conf['noResultsText']);
-				$attentionImage = '';
-			} else {
-				// use general text
-				$noResultsText = $this->pi_getLL('no_results_found');
-				// attention icon
-				unset($imageConf);
-				if (TYPO3_VERSION_INTEGER < 6002000) {
-					$imageConf['file'] = t3lib_extMgm::siteRelPath($this->extKey).'res/img/attention.gif';
-				} else {
-					$imageConf['file'] = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey).'res/img/attention.gif';
-				}
-				$imageConf['altText'] = $this->pi_getLL('no_results_found');
-				$attentionImage=$this->cObj->IMAGE($imageConf);
-			}
-
-			// hook to implement your own idea of a no result message
-			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['noResultsHandler'])) {
-				foreach($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['noResultsHandler'] as $_classRef) {
-					if (TYPO3_VERSION_INTEGER >= 7000000) {
-						$_procObj = & TYPO3\CMS\Core\Utility\GeneralUtility::getUserObj($_classRef);
-					} else {
-						$_procObj = & t3lib_div::getUserObj($_classRef);
-					}
-					$_procObj->noResultsHandler($noResultsText, $this);
-				}
-			}
-
-			// set text for "no results found"
-			$content = $this->cObj->substituteMarker($content,'###MESSAGE###', $noResultsText);
-
-			// set attention icon?
-			$content = $this->cObj->substituteMarker($content,'###IMAGE###', $attentionImage);
-
-			// add onload image if in AJAX mode
-			if($this->conf['renderMethod'] != 'static') {
-				$content .= $this->onloadImage;
-			}
-
-			return $content;
+		// render "no results" text and stop here
+		if ($this->numberOfResults == 0) {
+			return $this->renderNoResultsText();
 		}
 
 		if($this->hasTooShortWords) {
-			// get subpart for general message
-			$content = $this->cObj->getSubpart($this->templateCode, '###GENERAL_MESSAGE###');
-			$content = $this->cObj->substituteMarker($content, '###MESSAGE###', $this->pi_getLL('searchword_length_error'));
-
-			// attention icon
-			unset($imageConf);
-			if (TYPO3_VERSION_INTEGER < 6002000) {
-				$imageConf['file'] = t3lib_extMgm::siteRelPath($this->extKey) . 'res/img/attention.gif';
-			} else {
-				$imageConf['file'] = TYPO3\CMS\Core\Utility\ExtensionManagementUtility::siteRelPath($this->extKey) . 'res/img/attention.gif';
-			}
-			$imageConf['altText'] = $this->pi_getLL('no_results_found');
-			$attentionImage=$this->cObj->IMAGE($imageConf);
-
-			// set attention icon?
-			$content = $this->cObj->substituteMarker($content, '###IMAGE###', $attentionImage);
+			$content = $this->renderTooShortWordsText();
+			$this->fluidTemplateVariables['wordsTooShort'] = 1;
 		}
 
 		// loop through results
@@ -1507,6 +1533,8 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$this->searchResult = t3lib_div::makeInstance('tx_kesearch_lib_searchresult', $this);
 		}
 
+
+		$this->fluidTemplateVariables['resultrows'] = array();
 		foreach($rows as $row) {
 			// generate row content
 			$tempContent = $this->cObj->getSubpart($this->templateCode, '###RESULT_ROW###');
@@ -1517,7 +1545,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 				'teaser' => $this->searchResult->getTeaser(),
 			);
 
-			// hook for additional markers in result
+			// hook for additional markers in result (only valid for maker based templating)
 			if (is_array($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['ke_search']['additionalResultMarker'])) {
 					// make curent row number available to hook
 				$this->currentRowNumber = $resultCount;
@@ -1543,45 +1571,54 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 
 			// replace markers
 			$tempContent = $this->cObj->substituteMarkerArray($tempContent, $tempMarkerArray, $wrap='###|###', $uppercase=1);
+			$resultrowTemplateValues = $tempMarkerArray;
 
 			// show result url?
+			$resultUrl = $this->searchResult->getResultUrl($this->conf['renderResultUrlAsLink']);
 			if ($this->conf['showResultUrl']) {
 				$subContent = $this->cObj->getSubpart($this->templateCode, '###SUB_RESULTURL###');
 				$subContent = $this->cObj->substituteMarker($subContent, '###LABEL_RESULTURL###', $this->pi_getLL('label_resulturl'));
-				$subContent = $this->cObj->substituteMarker($subContent, '###RESULTURL###', $this->searchResult->getResultUrl($this->conf['renderResultUrlAsLink']));
+				$subContent = $this->cObj->substituteMarker($subContent, '###RESULTURL###', $resultUrl);
 			} else {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart($tempContent, '###SUB_RESULTURL###', $subContent, $recursive=1);
+			$resultrowTemplateValues['url'] = $resultUrl;
 
 			// show result numeration?
+			$resultNumber = $resultCount + ($this->piVars['page'] * $this->conf['resultsPerPage']) - $this->conf['resultsPerPage'];
 			if ($this->conf['resultsNumeration']) {
 				$subContent = $this->cObj->getSubpart($this->templateCode, '###SUB_NUMERATION###');
-				$subContent = $this->cObj->substituteMarker($subContent, '###NUMBER###', $resultCount + ($this->piVars['page'] * $this->conf['resultsPerPage']) - $this->conf['resultsPerPage']);
+				$subContent = $this->cObj->substituteMarker($subContent, '###NUMBER###', $resultNumber);
 			} else {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart($tempContent, '###SUB_NUMERATION###', $subContent, $recursive=1);
+			$resultrowTemplateValues['number'] = $resultNumber;
 
 			// show score?
+			$resultScore = number_format($row['score'],2,',','');
 			if ($this->conf['showScore'] && $row['score']) {
 				$subContent = $this->cObj->getSubpart($this->templateCode, '###SUB_SCORE###');
 				$subContent = $this->cObj->substituteMarker($subContent, '###LABEL_SCORE###', $this->pi_getLL('label_score'));
-				$subContent = $this->cObj->substituteMarker($subContent, '###SCORE###', number_format($row['score'],2,',',''));
+				$subContent = $this->cObj->substituteMarker($subContent, '###SCORE###', $resultScore);
 			} else {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart($tempContent, '###SUB_SCORE###', $subContent, $recursive=1);
+			$resultrowTemplateValues['score'] = $resultScore;
 
 			// show date?
+			$resultDate = date($GLOBALS['TYPO3_CONF_VARS']['SYS']['ddmmyy'], $row['sortdate']);
 			if ($this->conf['showDate'] && $row['sortdate']) {
 				$subContent = $this->cObj->getSubpart($this->templateCode, '###SUB_DATE###');
 				$subContent = $this->cObj->substituteMarker($subContent, '###LABEL_DATE###', $this->pi_getLL('label_date'));
-				$subContent = $this->cObj->substituteMarker($subContent, '###DATE###', date($GLOBALS['TYPO3_CONF_VARS']['SYS']['ddmmyy'], $row['sortdate']));
+				$subContent = $this->cObj->substituteMarker($subContent, '###DATE###', $resultDate);
 			} else {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_DATE###', $subContent, $recursive=1);
+			$resultrowTemplateValues['date'] = $resultDate;
 
 			// show percental score?
 			if ($this->conf['showPercentalScore'] && $row['percent']) {
@@ -1592,6 +1629,7 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_SCORE_PERCENT###', $subContent, $recursive=1);
+			$resultrowTemplateValues['percent'] = $row['percent'];
 
 			// show score scale?
 			if ($this->conf['showScoreScale'] && $row['percent']) {
@@ -1603,9 +1641,9 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_SCORE_SCALE###', $subContent, $recursive=1);
 
 			// show tags?
+			$tags = $row['tags'];
+			$tags = str_replace('#', ' ', $tags);
 			if ($this->conf['showTags']) {
-				$tags = $row['tags'];
-				$tags = str_replace('#', ' ', $tags);
 				$subContent = $this->cObj->getSubpart($this->templateCode,'###SUB_TAGS###');
 				$subContent = $this->cObj->substituteMarker($subContent,'###LABEL_TAGS###', $this->pi_getLL('label_tags'));
 				$subContent = $this->cObj->substituteMarker($subContent,'###TAGS###', htmlspecialchars($tags));
@@ -1613,15 +1651,22 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 				$subContent = '';
 			}
 			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_TAGS###', $subContent, $recursive=1);
+			$resultrowTemplateValues['tags'] = $tags;
 
 			// preview image
-			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_TYPE_ICON###', $this->renderPreviewImageOrTypeIcon($row), $recursive=1);
+			$renderedImage = $this->renderPreviewImageOrTypeIcon($row);
+			$resultrowTemplateValues['imageHtml'] = $renderedImage[0];
+			$tempContent = $this->cObj->substituteSubpart ($tempContent, '###SUB_TYPE_ICON###', $renderedImage[1], $recursive=1);
 
-			// add temp content to result list
+			// fluid templating: add result row to
+			$this->fluidTemplateVariables['resultrows'][] = $resultrowTemplateValues;
+
+			// marker based templating: add temp content to result list
 			$content .= $tempContent;
 
 			// increase result counter
 			$resultCount++;
+
 		}
 
 		// hook for additional content AFTER the result list
@@ -1649,8 +1694,15 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 	 * renders a preview image in the result list or a icon which indicates
 	 * the type of the result (page, news, ...)
 	 *
+	 * returns an array with
+	 * index 0: pure HTML code for the image for the use in fluid templating
+	 * index 1: fully rendered subpart for marker based templating
+	 *
+	 * TODO: Move the image rendering itself to fluid
+	 *
 	 * @author Christian Bülter <buelter@kennziffer.com>
 	 * @since 19.03.15
+	 * @return array
 	 */
 	function renderPreviewImageOrTypeIcon($row) {
 
@@ -1685,11 +1737,12 @@ class tx_kesearch_lib extends tx_kesearch_pluginBase {
 
 			// render type icon if no preview image is available (or preview is disabled)
 			if ($this->conf['showTypeIcon'] && empty($imageHtml)) {
+				$imageHtml = $this->renderTypeIcon($row['type']);
 				$subContent = $this->cObj->getSubpart($this->templateCode,'###SUB_TYPE_ICON###');
-				$subContent = $this->cObj->substituteMarker($subContent,'###TYPE_ICON###', $this->renderTypeIcon($row['type']));
+				$subContent = $this->cObj->substituteMarker($subContent,'###TYPE_ICON###', $imageHtml);
 			}
 
-			return $subContent;
+			return array($imageHtml, $subContent);
 	}
 
 	/**
