@@ -1,6 +1,7 @@
 ChangeLog
 
 Version 1.10.3
+- feature: index content elements attached to news (ext:news). Thanks to TRITUM GmbH for sponsoring.
 
 Version 1.10.2
 - bugfix: add langDisable in flexform, https://forge.typo3.org/issues/64579
